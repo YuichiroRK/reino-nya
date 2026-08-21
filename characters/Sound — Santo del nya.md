@@ -9,6 +9,7 @@
 - **Pareja:** Angel — Reina del nya
 - **Arquetipo:** El artista silencioso
 - **Temática:** Arte, dibujo, luz sagrada, tinta y creación
+RAREZA: SSR
 
 ---
 

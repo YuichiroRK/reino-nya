@@ -10,6 +10,7 @@
 **Estilo de combate:** Magia ofensiva, daño en área y potenciación de aliados  
 **Concepto:** Princesa mágica espontánea e idealista  
 **Inspiración conceptual:** Madoka Kaname
+RAREZA: SSR
 
 ---
 

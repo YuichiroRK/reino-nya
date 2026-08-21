@@ -13,6 +13,7 @@
 | **Tema principal** | Protección, liderazgo, unión del ejército y energía celestial |
 | **Estado actual** | Angel luminosa |
 | **Posible evolución** | Corrupción |
+RAREZA: SSR
 
 ---
 

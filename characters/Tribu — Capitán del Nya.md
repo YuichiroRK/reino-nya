@@ -13,6 +13,7 @@
 | **Posición ideal** | Segunda línea |
 | **Complejidad** | Alta |
 | **Estilo de juego** | Adaptativo / Táctico |
+RAREZA: SSR
 
 ---
 

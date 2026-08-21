@@ -9,6 +9,7 @@
 **Dificultad:** Alta  
 **Especialidad:** Escalamiento, combos, optimización y daño explosivo  
 **Temática:** Fénix + Turbo + videojuegos + tecnología
+RAERZA: SSR
 
 ---
 

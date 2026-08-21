@@ -6,6 +6,7 @@
 - **Rango:** Soldado
 - **Clase:** Bruiser / Tank
 - **Rol:** Frontliner
+- RARERZA: R
 - **Tipo de combate:** Cuerpo a cuerpo
 - **Arma principal:** Arma pesada / espadón
 
