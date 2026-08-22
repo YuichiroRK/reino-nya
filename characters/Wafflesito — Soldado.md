@@ -1,76 +1,158 @@
 # Wafflesito — Soldado
 
 **Rareza:** R  
-**Rol:** Soldado / Versátil básico  
-**Arma:** Espada corta  
-**MBTI:** ISFP / ESFP
+**Clase:** Soldado  
+**Función:** Utilidad / DPS secundario  
+**Arma:** Comida / utensilios de cocina
+
+## Concepto
+
+Wafflesito es un soldado completamente común... excepto por el pequeño detalle de que **utiliza comida como arma**.
+
+No posee grandes poderes, técnicas legendarias ni una personalidad particularmente llamativa. Simplemente descubrió que lanzar su comida contra los enemigos funcionaba sorprendentemente bien y decidió seguir haciéndolo.
+
+Su estilo de combate es sencillo, improvisado y ligeramente absurdo.
+
+> *“Un día se quedó sin munición y lanzó su almuerzo. Funcionó. Desde entonces nadie volvió a darle munición.”*
 
 ## Personalidad
 
-Wafflesito es, en términos simples, un NPC con nombre propio.
+Wafflesito es extremadamente NPC.
 
-Es un soldado bastante común, tranquilo y ligeramente despistado. No tiene grandes ambiciones, destinos proféticos ni una historia particularmente dramática. Hace su trabajo, sigue órdenes y continúa con su vida.
+Es tranquilo, algo despistado y bastante promedio. No busca convertirse en héroe ni destacar dentro del ejército. Simplemente cumple con su trabajo y sigue las órdenes.
 
-Es amable y se lleva bien con prácticamente todo el mundo, principalmente porque nunca tiene problemas con nadie. Puede quedarse completamente callado durante una conversación y, cuando finalmente habla, decir algo que no tiene absolutamente nada que ver con lo que estaban hablando.
+Es amable con prácticamente todo el mundo y rara vez tiene conflictos con otros personajes.
 
-A pesar de su apariencia de personaje secundario genérico, ocasionalmente demuestra tener bastante sentido común.
+Puede permanecer completamente callado durante una conversación y, cuando finalmente habla, decir algo que no tiene absolutamente nada que ver con el tema.
 
-## Características
+A pesar de todo, tiene momentos ocasionales de sorprendente sentido común.
 
-- Extremadamente promedio en prácticamente todo.
-- Tranquilo y fácil de tratar.
-- Algo despistado.
-- No busca destacar.
-- Sigue órdenes sin cuestionarlas demasiado.
-- Puede quedarse mirando al vacío cuando no tiene nada que hacer.
-- Se lleva bien con casi cualquier persona.
-- A veces parece no entender qué está sucediendo.
-- Tiene una tendencia a aparecer en escenas sin que nadie recuerde haberlo invitado.
-- Puede tener talentos inesperados que jamás ha tenido oportunidad de demostrar.
+### Características
 
-## Rol en el ejército
+- Muy tranquilo.
+- Despistado.
+- Extremadamente promedio.
+- Fácil de ignorar... hasta que empieza a lanzar comida.
+- Amable con casi todo el mundo.
+- No tiene grandes ambiciones.
+- Sigue órdenes sin demasiadas complicaciones.
+- Tiene una actitud de “supongo que toca hacerlo”.
+- Parece estar siempre preparado para comer.
+- No comprende por qué los demás consideran extraño su método de combate.
 
-Wafflesito representa al soldado común del ejército del Nya.
+## Estilo de combate
 
-No es un prodigio ni un guerrero legendario. Es simplemente alguien que cumple su función y ayuda a mantener el ejército funcionando.
+Wafflesito utiliza distintos alimentos y utensilios de cocina como armas.
 
-Precisamente por eso resulta útil como unidad R: es una unidad sencilla, equilibrada y fácil de entender.
+Su equipamiento puede incluir:
 
-## Combate
+- Waffles.
+- Sirope.
+- Pan.
+- Frutas.
+- Comida preparada.
+- Sartenes.
+- Espátulas.
+- Cualquier cosa que encuentre en una cocina.
 
-**Tipo:** Versátil básico
+No es un especialista en daño puro. Su fortaleza está en poder realizar ataques sencillos mientras aplica pequeños efectos de utilidad.
 
-Wafflesito utiliza una espada corta y posee estadísticas equilibradas. No destaca particularmente en daño, defensa, velocidad o utilidad, pero tampoco presenta una debilidad extrema.
+## Ataques
 
-Es una unidad pensada para cumplir correctamente con su trabajo sin intentar competir con personajes de mayor rareza.
+### 🧇 Waffle Explosivo
 
-### Habilidad — “Bueno... supongo.”
+Lanza un waffle cubierto de sirope contra un enemigo.
 
-Wafflesito se adapta ligeramente a la situación actual, obteniendo pequeñas mejoras generales según el tipo de combate.
+Al impactar, el waffle explota y causa daño en un pequeño radio.
 
-No llega a especializarse realmente en nada.
+**Tipo:** Daño de área.
 
-Es simplemente... suficientemente bueno.
+### 🍯 Sirope Pegajoso
 
-## Dinámica con otros personajes
+Lanza un recipiente de sirope al suelo.
 
-Wafflesito funciona principalmente como personaje de fondo.
+Los enemigos que atraviesan la zona quedan ralentizados durante unos segundos.
 
-Puede aparecer acompañando a otros soldados, realizando tareas cotidianas o simplemente estando presente durante acontecimientos importantes.
+**Tipo:** Control / Debuff.
 
-Su gracia viene de contrastar con personajes mucho más importantes o extravagantes.
+### 🍞 Pan Boomerang
 
-Mientras otros están hablando sobre guerras, política, magia o destinos legendarios, Wafflesito probablemente esté preguntándose si ya es hora de comer.
+Lanza un trozo de pan endurecido que golpea a un enemigo y regresa hacia Wafflesito.
+
+Puede golpear dos veces si el enemigo permanece en la trayectoria.
+
+**Tipo:** DPS a distancia.
+
+### 🍳 Sarténazo
+
+Cuando un enemigo se acerca demasiado, Wafflesito utiliza una sartén para golpearlo.
+
+Es su principal herramienta de defensa cuerpo a cuerpo.
+
+**Tipo:** Daño físico / Defensa.
+
+### 🧺 Almuerzo de Emergencia
+
+Wafflesito deja una porción de comida en el campo.
+
+El primer aliado que la recoge recupera una pequeña cantidad de vida.
+
+**Tipo:** Utilidad / Curación menor.
+
+## Habilidad especial — “Mi almuerzo.”
+
+Wafflesito prepara rápidamente un waffle especial y lo lanza hacia la zona con mayor concentración de enemigos.
+
+El waffle causa daño de área y deja una pequeña cantidad de sirope en el suelo, ralentizando a los enemigos afectados.
+
+La habilidad representa perfectamente su filosofía de combate:
+
+**si algo puede comerse, probablemente también pueda lanzarse.**
+
+## Función en el Tower Defense
+
+Wafflesito funciona como una unidad **R económica y versátil**.
+
+No compite con los personajes de mayor rareza en ninguna estadística específica, pero puede aportar un poco de todo:
+
+- Daño moderado.
+- Daño de área.
+- Ralentización.
+- Curación pequeña.
+- Defensa cuerpo a cuerpo básica.
+
+Es especialmente útil en las primeras etapas o como unidad complementaria cuando el jugador necesita cubrir varias necesidades con poco espacio o recursos.
+
+## Dinámica con el roster
+
+Wafflesito funciona muy bien como personaje de fondo.
+
+Mientras los personajes importantes están discutiendo guerras, política, magia o el destino del Imperio del Nya, Wafflesito puede estar tranquilamente preparando comida.
+
+Su humor viene precisamente de tratar situaciones absurdamente peligrosas como si fueran algo completamente normal.
+
+**Tribu:** probablemente ya está acostumbrado a verlo combatir con comida.
+
+**César:** considera que debería usar un arma de verdad.
+
+**Perri:** probablemente quiere probar sus waffles.
+
+**Wafflesito:** no entiende cuál es el problema.
 
 ## Detalles
 
-- Es probablemente uno de los soldados más normales del ejército.
-- Nadie sabe exactamente por qué se llama Wafflesito.
-- Tiene algún talento completamente inútil que probablemente nunca será relevante.
-- Es muy fácil olvidarse de que está presente.
-- Aun así, casi siempre termina apareciendo en algún lado.
-- Es el equivalente a un NPC de fondo que accidentalmente consiguió una ficha de personaje.
+- Nadie sabe exactamente por qué decidió utilizar comida como arma.
+- Wafflesito considera completamente normal llevar comida al campo de batalla.
+- Tiene una cantidad preocupantemente grande de waffles encima.
+- Puede preparar comida mientras combate.
+- Su mochila aparentemente tiene espacio infinito.
+- Su talento culinario podría ser considerablemente mejor que su talento militar.
+- Es posible que haya entrado al ejército simplemente porque no sabía qué más hacer.
 
 ## Frase
 
-> “Ah... ¿ya empezamos?”
+> **“¿Quieres un waffle?”**
+
+Y cinco segundos después:
+
+> **“Ah... era para lanzárselo.”**
