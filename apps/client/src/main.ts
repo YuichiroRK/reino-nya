@@ -84,6 +84,10 @@ class MainScene extends Phaser.Scene {
   private uiUpgradeInfo!: HTMLElement;
   private uiProfileStatus!: HTMLElement;
   private uiEnemySelect!: HTMLSelectElement;
+  private uiWaveBannerTitle!: HTMLElement;
+  private uiWaveBannerEnemies!: HTMLElement;
+  private uiGemBannerStatus!: HTMLElement;
+  private uiGemBannerProgress!: HTMLElement;
 
   constructor() {
     super({ key: 'MainScene' });
@@ -286,6 +290,10 @@ class MainScene extends Phaser.Scene {
     this.uiUpgradeInfo = document.getElementById('upgrade-info')!;
     this.uiProfileStatus = document.getElementById('profile-status')!;
     this.uiEnemySelect = document.getElementById('enemy-select') as HTMLSelectElement;
+    this.uiWaveBannerTitle = document.getElementById('wave-banner-title')!;
+    this.uiWaveBannerEnemies = document.getElementById('wave-banner-enemies')!;
+    this.uiGemBannerStatus = document.getElementById('gem-banner-status')!;
+    this.uiGemBannerProgress = document.getElementById('gem-banner-progress')!;
     this.uiSkillModal.classList.remove('visible');
 
     this.uiCloseBtn.addEventListener('click', () => this.closeUIPanel());
@@ -391,10 +399,22 @@ class MainScene extends Phaser.Scene {
       const val = (e.target as HTMLSelectElement).value;
       this.selectedCharacter = CHARACTER_MAP[val] ?? Angel;
       this.updateTowerLimit();
+      document.querySelectorAll<HTMLElement>('.roster-card').forEach(card => card.classList.toggle('selected', card.dataset.character === val));
     });
     this.uiEnemySelect.addEventListener('change', () => {
       this.selectedEnemyId = this.uiEnemySelect.value;
     });
+    document.querySelectorAll<HTMLButtonElement>('.roster-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const character = CHARACTER_MAP[card.dataset.character ?? 'angel'] ?? Angel;
+        this.selectedCharacter = character;
+        charSelect.value = character.id;
+        this.updateTowerLimit();
+        document.querySelectorAll('.roster-card').forEach(item => item.classList.remove('selected'));
+        card.classList.add('selected');
+      });
+    });
+    document.querySelector('.roster-card')?.classList.add('selected');
   }
 
   toggleWall(x: number, y: number) {
@@ -592,6 +612,10 @@ class MainScene extends Phaser.Scene {
     this.uiEnemyStatus.innerText = `${activeEnemies}${this.waveSystem.isSpawning ? ' + entrando' : ''}`;
     this.uiWaveProgress.style.width = `${(this.waveSystem.wave / this.waveSystem.maxWaves) * 100}%`;
     this.uiGemProgress.style.width = `${(aliveGems / this.gems.length) * 100}%`;
+    this.uiWaveBannerTitle.innerText = `OLEADA ${this.waveSystem.wave} / ${this.waveSystem.maxWaves}`;
+    this.uiWaveBannerEnemies.innerText = activeEnemies > 0 ? `ENEMIGOS: ${activeEnemies}` : 'PREPARANDO DEFENSA';
+    this.uiGemBannerStatus.innerText = `${aliveGems} / ${this.gems.length} protegidas`;
+    this.uiGemBannerProgress.style.width = `${(aliveGems / this.gems.length) * 100}%`;
   }
 
   private endGame(state: 'victory' | 'defeat') {

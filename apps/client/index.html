@@ -356,10 +356,47 @@
       #game-status { left: 12px; width: 195px; }
       #test-toolbar { right: 12px; width: 195px; }
     }
+
+    /* In-game HUD layout inspired by a classic hero-defense interface. */
+    #game-container { left: 0; width: 100vw; }
+    #game-status { top: 14px; left: 14px; width: 190px; padding: 11px; }
+    #game-status .hud-grid { display: block; }
+    #game-status .hud-card { margin-bottom: 7px; }
+    #game-status .hud-card:not(.coin-card):not(:last-child) { display: none; }
+    #game-status .hud-card:last-child { margin-bottom: 0; }
+    #test-toolbar { top: auto; right: 14px; bottom: 14px; width: 220px; padding: 12px; border-radius: 15px; }
+    #ui-panel { top: auto; right: auto; left: 14px; bottom: 14px; width: 250px; }
+    #ui-panel.active { top: auto; right: auto; left: 14px; bottom: 14px; }
+    #wave-banner, #gem-banner { position: absolute; z-index: 10; border: 1px solid var(--ui-border); border-radius: 12px; background: var(--ui-surface); box-shadow: 0 10px 30px rgba(0,0,0,0.3); color: var(--ui-text); text-align: center; }
+    #wave-banner { top: 14px; left: 50%; width: 300px; padding: 9px 18px; transform: translateX(-50%); }
+    #wave-banner strong { display: block; font-size: 1rem; letter-spacing: 0.04em; }
+    #wave-banner span { color: var(--ui-muted); font-size: 0.72rem; }
+    #gem-banner { top: 14px; right: 14px; width: 190px; padding: 10px 13px; text-align: left; }
+    #gem-banner strong { display: block; color: var(--cyan-color); font-size: 0.76rem; letter-spacing: 0.1em; text-transform: uppercase; }
+    #gem-banner span { color: var(--ui-text); font-weight: 800; }
+    #roster { position: absolute; left: 50%; bottom: 14px; z-index: 10; display: flex; gap: 7px; width: min(580px, calc(100vw - 500px)); min-width: 420px; padding: 8px; transform: translateX(-50%); border: 1px solid var(--ui-border); border-radius: 14px; background: var(--ui-surface); box-shadow: 0 10px 30px rgba(0,0,0,0.35); }
+    .roster-card { flex: 1; min-width: 0; padding: 7px 4px; border: 1px solid var(--ui-border); border-radius: 9px; background: var(--ui-card); color: var(--ui-text); cursor: pointer; text-align: center; }
+    .roster-card:hover, .roster-card.selected { border-color: var(--primary-color); background: rgba(192,132,252,0.2); box-shadow: 0 0 12px rgba(192,132,252,0.25); }
+    .roster-card b { display: block; overflow: hidden; font-size: 0.72rem; text-overflow: ellipsis; white-space: nowrap; }
+    .roster-card small { color: var(--ui-muted); font-size: 0.62rem; }
+    .roster-card .roster-cost { display: block; margin-top: 3px; color: #fcd34d; font-size: 0.65rem; font-weight: 800; }
+    .roster-card .roster-bar { height: 3px; margin: 5px 4px 0; border-radius: 5px; background: var(--primary-color); }
+    body.light-theme #wave-banner, body.light-theme #gem-banner, body.light-theme #roster { box-shadow: 0 10px 30px rgba(80,40,110,0.16); }
+    @media (max-width: 700px) {
+      #wave-banner { top: 10px; width: 180px; padding: 7px 10px; }
+      #gem-banner { top: 10px; right: 10px; width: 120px; padding: 7px 9px; }
+      #game-status { top: 10px; left: 10px; width: 150px; }
+      #roster { left: 10px; right: 10px; bottom: 78px; width: auto; min-width: 0; overflow-x: auto; transform: none; }
+      .roster-card { min-width: 74px; }
+      #test-toolbar { left: 10px; right: 10px; bottom: 10px; width: auto; }
+      #ui-panel, #ui-panel.active { left: 10px; right: 10px; bottom: 145px; width: auto; }
+    }
   </style>
 </head>
 <body>
   <div id="game-container"></div>
+  <div id="wave-banner"><strong id="wave-banner-title">OLEADA 0 / 5</strong><span id="wave-banner-enemies">Preparando defensa</span></div>
+  <div id="gem-banner"><strong>Joya del Nya</strong><span id="gem-banner-status">3 / 3 protegidas</span><div class="progress-track"><div class="progress-fill" id="gem-banner-progress"></div></div></div>
   <div id="game-status">
     <div class="hud-header"><span>Imperio del Nya</span><span id="game-state">EN JUEGO</span><button id="theme-toggle">☾</button><button id="hud-toggle">Ocultar</button></div>
     <div class="hud-grid">
@@ -370,6 +407,14 @@
       <div class="hud-card wide"><span class="hud-card-label">Progresión global</span><span class="hud-value" id="profile-status">Perfil Nv 1 · 0/100 XP</span></div>
     </div>
     <button id="wave-button">Pausar</button>
+  </div>
+  <div id="roster">
+    <button class="roster-card" data-character="angel"><b>Angel</b><small>SSR · BUFFER</small><span class="roster-cost">250 N</span><span class="roster-bar"></span></button>
+    <button class="roster-card" data-character="gretch"><b>Gretch</b><small>SSR · AOE</small><span class="roster-cost">250 N</span><span class="roster-bar"></span></button>
+    <button class="roster-card" data-character="tribu"><b>Tribu</b><small>SSR · COMMAND</small><span class="roster-cost">250 N</span><span class="roster-bar"></span></button>
+    <button class="roster-card" data-character="kiu"><b>Kiu</b><small>SR · DPS</small><span class="roster-cost">150 N</span><span class="roster-bar"></span></button>
+    <button class="roster-card" data-character="lucy"><b>Lucy</b><small>SR · HEALER</small><span class="roster-cost">150 N</span><span class="roster-bar"></span></button>
+    <button class="roster-card" data-character="cesar"><b>Cesar</b><small>R · TANK</small><span class="roster-cost">75 N</span><span class="roster-bar"></span></button>
   </div>
   
   <div id="test-toolbar">
