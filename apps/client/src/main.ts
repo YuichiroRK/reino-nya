@@ -703,6 +703,8 @@ class MainScene extends Phaser.Scene {
     this.towers = this.towers.filter(tower => tower.isActive);
 
     for (const enemy of this.enemies) {
+      enemy.updateStatuses(this.time.now);
+      if (!enemy.isActive || enemy.isStunned || !enemy.shouldMove(this.time.now, 450)) continue;
       if (enemy.gridPos.x === 10 && enemy.gridPos.y === 10) {
         const assignedGem = this.gems[enemy.targetGemIndex];
         const gem = assignedGem && !assignedGem.isDestroyed
@@ -721,7 +723,7 @@ class MainScene extends Phaser.Scene {
       const tower = this.towers.filter(candidate => candidate.isActive && Phaser.Math.Distance.Between(enemy.sprite.x, enemy.sprite.y, candidate.sprite.x, candidate.sprite.y) <= attackRange)
         .sort((a, b) => Phaser.Math.Distance.Between(enemy.sprite.x, enemy.sprite.y, a.sprite.x, a.sprite.y) - Phaser.Math.Distance.Between(enemy.sprite.x, enemy.sprite.y, b.sprite.x, b.sprite.y))[0];
       if (tower) {
-        enemy.attackTower(tower, this.time.now);
+        enemy.attackTower(tower, this.time.now, this.towers);
         continue;
       }
 

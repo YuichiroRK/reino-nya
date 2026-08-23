@@ -290,8 +290,15 @@ export class Tower {
     if (skill.id === 'wild-current') {
       for (const enemy of enemies) if (enemy.isActive && this.isInRange(enemy)) {
         enemy.takeDamage(this.profile.baseStats.attack * 1.5);
-        enemy.speed *= 0.65;
+        enemy.applyStatus('slow', 3000, time, skill.effect.slowPercent ?? 0.35);
         VisualFX.impact(this.scene, enemy.sprite.x, enemy.sprite.y, 0x29b6f6);
+        VisualFX.floatText(this.scene, enemy.sprite.x, enemy.sprite.y, `SLOW ${Math.round((skill.effect.slowPercent ?? 0.35) * 100)}%`, '#67e8f9');
+      }
+    }
+    if (skill.id === 'princess-arc' || skill.id === 'regroup') {
+      for (const enemy of enemies) if (enemy.isActive && this.isInRange(enemy)) {
+        enemy.applyStatus('marked', 5000, time, 0.25);
+        VisualFX.floatText(this.scene, enemy.sprite.x, enemy.sprite.y, 'MARCADO', '#f9a8d4');
       }
     }
     if (skill.effect.aoeMultiplier && this.profile.id === 'gretch') {
@@ -345,12 +352,20 @@ export class Tower {
     VisualFX.floatText(this.scene, this.sprite.x, this.sprite.y, `+${amount}`, '#86efac');
   }
 
-  takeDamage(amount: number) {
+  takeDamage(amount: number, towers: Tower[] = []) {
     if (!this.isActive) return;
     let defenseBoost = 0;
     for (const skill of this.profile.skills ?? []) {
       if (skill.type === 'passive' && this.passiveReady.get(skill.id)) defenseBoost += skill.effect.defenseBoost ?? 0;
       if (skill.type === 'active' && (this.activeEffects.get(skill.id) ?? 0) > this.scene.time.now) defenseBoost += skill.effect.defenseBoost ?? 0;
+    }
+    for (const source of towers) {
+      if (source === this || !source.isActive) continue;
+      const inRange = Phaser.Math.Distance.Between(source.sprite.x, source.sprite.y, this.sprite.x, this.sprite.y) <= source.profile.baseStats.range;
+      if (!inRange) continue;
+      for (const skill of source.profile.skills ?? []) {
+        if (skill.type === 'active' && (source.activeEffects.get(skill.id) ?? 0) > this.scene.time.now) defenseBoost += (1 - (skill.effect.damageTakenMultiplier ?? 1));
+      }
     }
     const reducedDamage = amount * (100 / (100 + this.profile.baseStats.defense * (1 + defenseBoost)));
     this.hp = Math.max(0, this.hp - reducedDamage);

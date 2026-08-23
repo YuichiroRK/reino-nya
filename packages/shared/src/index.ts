@@ -90,6 +90,13 @@ export type EnemyType = 'basic' | 'runner' | 'armored' | 'flying' | 'boss';
 export type EnemyMovement = 'ground' | 'flying';
 export type EnemyAbility = 'dash' | 'shield' | 'swarm' | 'rage';
 export type SkillTargetPriority = 'weakest' | 'closest' | 'strongest' | 'all';
+export type StatusEffectType = 'slow' | 'stun' | 'burn' | 'marked';
+
+export interface StatusEffect {
+  type: StatusEffectType;
+  expiresAt: number;
+  value?: number;
+}
 
 export interface EnemyProfile {
   id: string;

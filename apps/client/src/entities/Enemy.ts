@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { SacredGem } from './SacredGem';
-import { EnemyProfile } from '@td-nya/shared';
+import { EnemyProfile, StatusEffect, StatusEffectType } from '@td-nya/shared';
 import { HealthBar } from './HealthBar';
 import type { Tower } from './Tower';
 
@@ -18,6 +18,9 @@ export class Enemy {
   private readonly healthBar: HealthBar;
   private lastGemAttack = 0;
   private specialUsed = false;
+  private statuses = new Map<StatusEffectType, StatusEffect>();
+  private lastStatusTick = 0;
+  private lastMove = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, profile: EnemyProfile, targetGemIndex = 0, difficulty = 1, onDefeated?: (reward: number, x: number, y: number) => void) {
     this.profile = profile;
@@ -40,7 +43,8 @@ export class Enemy {
   takeDamage(amount: number) {
     if (!this.isActive) return;
     
-    this.hp -= Math.max(1, amount - (this.profile.defense ?? 0));
+    const markedMultiplier = this.statuses.has('marked') ? 1.25 : 1;
+    this.hp -= Math.max(1, (amount * markedMultiplier) - (this.profile.defense ?? 0));
     this.updateHealthBar();
     
     // Feedback visual (parpadeo blanco)
@@ -59,6 +63,34 @@ export class Enemy {
     if (this.hp <= 0) {
       this.die();
     }
+  }
+
+  applyStatus(type: StatusEffectType, durationMs: number, time: number, value = 0) {
+    this.statuses.set(type, { type, expiresAt: time + durationMs, value });
+    return true;
+  }
+
+  updateStatuses(time: number) {
+    for (const [type, status] of this.statuses) {
+      if (status.expiresAt <= time) this.statuses.delete(type);
+    }
+    const burn = this.statuses.get('burn');
+    if (burn && time - this.lastStatusTick >= 500) {
+      this.hp = Math.max(0, this.hp - (burn.value ?? 5));
+      this.lastStatusTick = time;
+      this.updateHealthBar();
+      if (this.hp === 0) this.die();
+    }
+  }
+
+  get isStunned() { return this.statuses.has('stun'); }
+
+  shouldMove(time: number, tickMs: number) {
+    const slow = this.statuses.get('slow')?.value ?? 0;
+    const interval = tickMs * (1 + slow) / Math.max(0.5, this.speed);
+    if (time - this.lastMove < interval) return false;
+    this.lastMove = time;
+    return true;
   }
 
   die() {
@@ -91,12 +123,12 @@ export class Enemy {
     this.lastGemAttack = time;
   }
 
-  attackTower(tower: Tower, time: number) {
+  attackTower(tower: Tower, time: number, towers: Tower[] = []) {
     if (time - this.lastGemAttack < this.profile.attackCooldownMs) return;
     if (this.profile.physicalDamage && this.profile.magicDamage) {
-      tower.takeDamage(this.profile.physicalDamage);
-      tower.takeDamage(this.profile.magicDamage);
-    } else tower.takeDamage(this.attackDamage);
+      tower.takeDamage(this.profile.physicalDamage, towers);
+      tower.takeDamage(this.profile.magicDamage, towers);
+    } else tower.takeDamage(this.attackDamage, towers);
     this.lastGemAttack = time;
   }
 }
