@@ -93,6 +93,10 @@ class MainScene extends Phaser.Scene {
     super({ key: 'MainScene' });
   }
 
+  preload() {
+    this.load.image('tribu-idle', '/assets/characters/IdleTribu.png');
+  }
+
   create() {
     this.enemies = [];
     this.towers = [];

@@ -11,7 +11,7 @@ import { Projectile } from './Projectile';
 
 export class Tower {
   public profile: CharacterProfile;
-  public sprite: Phaser.GameObjects.Rectangle;
+  public sprite: Phaser.GameObjects.Rectangle | Phaser.GameObjects.Image;
   public rangeGraphics: Phaser.GameObjects.Graphics;
   public targetingPriority: TargetingPriority = TargetingPriority.CLOSEST_TO_CORE;
   public skillTargetPriority: SkillTargetPriority = 'weakest';
@@ -45,19 +45,17 @@ export class Tower {
     this.rangeGraphics = scene.add.graphics();
 
     // Draw tower body (on top of range overlay)
-    this.sprite = scene.add.rectangle(
-      x * tileSize + tileSize / 2,
-      y * tileSize + tileSize / 2,
-      tileSize * 0.8,
-      tileSize * 0.8,
-      0x4444ff
-    );
+    this.sprite = profile.id === 'tribu'
+      ? scene.add.image(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, 'tribu-idle').setDisplaySize(tileSize * 0.9, tileSize * 0.9)
+      : scene.add.rectangle(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, tileSize * 0.8, tileSize * 0.8, 0x4444ff);
     this.healthBar.update(this.sprite.x, this.sprite.y - 21, this.hp, this.maxHp, 0x22c55e);
 
     this.sprite.setInteractive({ useHandCursor: true });
     this.sprite.on('pointerdown', () => {
-      this.sprite.setStrokeStyle(2, 0xffffff);
-      scene.time.delayedCall(200, () => this.sprite.setStrokeStyle(0));
+      if (this.sprite instanceof Phaser.GameObjects.Rectangle) {
+        this.sprite.setStrokeStyle(2, 0xffffff);
+        scene.time.delayedCall(200, () => this.sprite instanceof Phaser.GameObjects.Rectangle && this.sprite.setStrokeStyle(0));
+      }
       onClick(this);
     });
   }
@@ -322,8 +320,10 @@ export class Tower {
     const reducedDamage = amount * (100 / (100 + this.profile.baseStats.defense * (1 + defenseBoost)));
     this.hp = Math.max(0, this.hp - reducedDamage);
     this.healthBar.update(this.sprite.x, this.sprite.y - 21, this.hp, this.maxHp, 0x22c55e);
-    this.sprite.setFillStyle(0xffffff);
-    this.scene.time.delayedCall(100, () => this.isActive && this.sprite.setFillStyle(0x4444ff));
+    if (this.sprite instanceof Phaser.GameObjects.Rectangle) {
+      this.sprite.setFillStyle(0xffffff);
+      this.scene.time.delayedCall(100, () => this.isActive && this.sprite instanceof Phaser.GameObjects.Rectangle && this.sprite.setFillStyle(0x4444ff));
+    }
     VisualFX.floatText(this.scene, this.sprite.x, this.sprite.y, `-${Math.ceil(reducedDamage)}`, '#fca5a5');
     if (this.hp === 0) {
       this.isActive = false;

@@ -4,7 +4,7 @@ import { Enemy } from '../entities/Enemy';
 import { DijkstraMap } from '@td-nya/game-data';
 
 export class TargetingSystem {
-  static select(tower: { sprite: Phaser.GameObjects.Rectangle; targetingPriority: TargetingPriority }, enemies: Enemy[], map: DijkstraMap) {
+  static select(tower: { sprite: { x: number; y: number }; targetingPriority: TargetingPriority }, enemies: Enemy[], map: DijkstraMap) {
     switch (tower.targetingPriority) {
       case TargetingPriority.CLOSEST_TO_TOWER:
         return enemies.reduce((prev, curr) => this.distance(tower.sprite, curr) < this.distance(tower.sprite, prev) ? curr : prev);
@@ -18,7 +18,7 @@ export class TargetingSystem {
     }
   }
 
-  private static distance(sprite: Phaser.GameObjects.Rectangle, enemy: Enemy) {
+  private static distance(sprite: { x: number; y: number }, enemy: Enemy) {
     return Phaser.Math.Distance.Between(sprite.x, sprite.y, enemy.sprite.x, enemy.sprite.y);
   }
 }
