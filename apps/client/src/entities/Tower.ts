@@ -3,6 +3,9 @@ import { CharacterProfile, TargetingPriority } from '@td-nya/shared';
 import { Enemy } from './Enemy';
 import { DijkstraMap } from '@td-nya/game-data';
 import { VisualFX } from '../effects/VisualFX';
+import { CombatSystem } from '../systems/CombatSystem';
+import { SkillSystem } from '../systems/SkillSystem';
+import { TargetingSystem } from '../systems/TargetingSystem';
 
 export class Tower {
   public profile: CharacterProfile;
@@ -135,7 +138,7 @@ export class Tower {
 
     if (inRange.length === 0) return;
 
-    const target = this.selectTarget(inRange, map);
+    const target = TargetingSystem.select(this, inRange, map);
     if (target) {
       this.fire(target, enemies, map, towers);
       this.lastFiredTime = time;
@@ -157,31 +160,6 @@ export class Tower {
       if (e2 < dx) { err += dx; y0 += sy; }
     }
     return true;
-  }
-
-  private selectTarget(enemies: Enemy[], map: DijkstraMap): Enemy {
-    switch (this.targetingPriority) {
-      case TargetingPriority.CLOSEST_TO_TOWER:
-        return enemies.reduce((prev, curr) => {
-          const distPrev = Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, prev.sprite.x, prev.sprite.y);
-          const distCurr = Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, curr.sprite.x, curr.sprite.y);
-          return distCurr < distPrev ? curr : prev;
-        });
-
-      case TargetingPriority.HIGHEST_HP:
-        return enemies.reduce((prev, curr) => (curr.hp > prev.hp ? curr : prev));
-
-      case TargetingPriority.LOWEST_HP:
-        return enemies.reduce((prev, curr) => (curr.hp < prev.hp ? curr : prev));
-
-      case TargetingPriority.CLOSEST_TO_CORE:
-      default:
-        return enemies.reduce((prev, curr) => {
-          const distPrev = map.grid[prev.gridPos.y][prev.gridPos.x].distance;
-          const distCurr = map.grid[curr.gridPos.y][curr.gridPos.x].distance;
-          return distCurr < distPrev ? curr : prev;
-        });
-    }
   }
 
   private fire(target: Enemy, enemies: Enemy[], map: DijkstraMap, towers: Tower[]) {
@@ -211,7 +189,7 @@ export class Tower {
     }
 
     const attackBoost = towers.reduce((boost, tower) => boost + tower.getAttackBoostFor(this, towers, map), 0);
-    const damage = this.profile.baseStats.attack * (1 + attackBoost) * damageMultiplier;
+    const damage = CombatSystem.calculateDamage(this.profile.baseStats.attack, attackBoost, damageMultiplier);
     target.takeDamage(damage);
     if (aoeMultiplier > 1) {
       for (const enemy of enemies) {
@@ -243,10 +221,10 @@ export class Tower {
             this.skillCooldowns.set(skill.id, time + 1000);
           }
         }
-      } else if ((this.skillCooldowns.get(skill.id) ?? 0) <= time &&
+      } else if (SkillSystem.isReady(this.skillCooldowns, skill.id, time) &&
         (this.profile.id !== 'gretch' || enemies.some(enemy => enemy.isActive && this.isInRange(enemy)))) {
         this.activateSkill(skill, time, enemies, map, towers);
-        this.skillCooldowns.set(skill.id, time + (skill.cooldownMs ?? 0));
+        SkillSystem.setCooldown(this.skillCooldowns, skill.id, time, skill.cooldownMs ?? 0);
       }
     }
   }
