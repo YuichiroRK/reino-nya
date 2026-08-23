@@ -9,9 +9,9 @@ export const EnemyData: Record<string, EnemyProfile> = {
 };
 
 export const Waves = [
-  { number: 1, entries: [{ enemyId: 'basic', count: 4, intervalMs: 350 }] },
-  { number: 2, entries: [{ enemyId: 'basic', count: 4 }, { enemyId: 'runner', count: 2, intervalMs: 500 }] },
-  { number: 3, entries: [{ enemyId: 'basic', count: 4 }, { enemyId: 'armored', count: 2 }] },
-  { number: 4, entries: [{ enemyId: 'runner', count: 4 }, { enemyId: 'flying', count: 3 }] },
-  { number: 5, entries: [{ enemyId: 'armored', count: 3 }, { enemyId: 'flying', count: 3 }, { enemyId: 'boss', count: 1 }] },
+  { number: 1, entries: [{ enemyId: 'basic', count: 4, intervalMs: 1100 }] },
+  { number: 2, entries: [{ enemyId: 'basic', count: 5, intervalMs: 950 }, { enemyId: 'runner', count: 2, intervalMs: 1200 }] },
+  { number: 3, entries: [{ enemyId: 'basic', count: 6, intervalMs: 850 }, { enemyId: 'armored', count: 2, intervalMs: 1500 }] },
+  { number: 4, entries: [{ enemyId: 'runner', count: 5, intervalMs: 800 }, { enemyId: 'flying', count: 3, intervalMs: 1300 }] },
+  { number: 5, entries: [{ enemyId: 'armored', count: 4, intervalMs: 1400 }, { enemyId: 'flying', count: 4, intervalMs: 1000 }, { enemyId: 'boss', count: 1, intervalMs: 2000 }] },
 ];

@@ -68,6 +68,17 @@ class MainScene extends Phaser.Scene {
   }
 
   create() {
+    this.enemies = [];
+    this.towers = [];
+    this.gems = [];
+    this.occupiedCells.clear();
+    this.waveSystem = new WaveSystem();
+    this.gameState = 'playing';
+    this.isPaused = false;
+    this.coins = 500;
+    this.rewardedWave = 0;
+    this.spawnIndex = 0;
+
     const cols = 20;
     const rows = 20;
     this.tileSize = Math.min(40, Math.floor((this.scale.width - 16) / cols));
@@ -161,7 +172,7 @@ class MainScene extends Phaser.Scene {
     });
 
     this.time.addEvent({
-      delay: 250,
+      delay: 450,
       callback: this.moveEnemies,
       callbackScope: this,
       loop: true
@@ -213,6 +224,8 @@ class MainScene extends Phaser.Scene {
     this.uiEndTitle = document.getElementById('end-title')!;
     this.uiEndMessage = document.getElementById('end-message')!;
     this.uiRestartButton = document.getElementById('restart-button') as HTMLButtonElement;
+    this.uiEndScreen.classList.remove('visible');
+    this.uiWaveButton.disabled = false;
     this.uiHud = document.getElementById('game-status')!;
     this.uiHudToggle = document.getElementById('hud-toggle') as HTMLButtonElement;
     this.uiWaveButton = document.getElementById('wave-button') as HTMLButtonElement;

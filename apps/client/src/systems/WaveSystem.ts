@@ -3,8 +3,8 @@ import { WaveDefinition } from '@td-nya/shared';
 export class WaveSystem {
   public wave = 0;
   public readonly maxWaves = 5;
-  private nextWaveAt = 5000;
-  private waveDelay = 8000;
+  private nextWaveAt = 12000;
+  private waveDelay = 15000;
   private pending: { enemyId: string; remaining: number; intervalMs: number; nextSpawnAt: number }[] = [];
 
   update(time: number, activeEnemies: number, waves: WaveDefinition[], spawn: (enemyId: string) => void) {
