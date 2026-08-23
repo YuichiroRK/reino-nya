@@ -1,0 +1,16 @@
+{
+  "name": "td-nya-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "docker compose up --build",
+    "install:all": "pnpm install",
+    "build:shared": "pnpm --filter shared build",
+    "build:game-data": "pnpm --filter game-data build",
+    "build:packages": "pnpm build:shared && pnpm build:game-data",
+    "build": "pnpm build:packages && pnpm --filter client build && pnpm --filter server build"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
