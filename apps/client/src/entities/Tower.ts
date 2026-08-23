@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { CharacterProfile, TargetingPriority } from '@td-nya/shared';
 import { Enemy } from './Enemy';
 import { DijkstraMap } from '@td-nya/game-data';
+import { VisualFX } from '../effects/VisualFX';
 
 export class Tower {
   public profile: CharacterProfile;
@@ -12,13 +13,23 @@ export class Tower {
   private lastFiredTime: number = 0;
   private scene: Phaser.Scene;
   private tileSize: number;
+  private skillCooldowns = new Map<string, number>();
+  private activeEffects = new Map<string, number>();
+  private passiveReady = new Map<string, boolean>();
+  private attackCount = 0;
+  private nextDamageMultiplier = 1;
+  private nextAoeMultiplier = 1;
   public gridPos: { x: number; y: number };
+  public hp: number;
+  public readonly maxHp: number;
 
   constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, profile: CharacterProfile, onClick: (t: Tower) => void) {
     this.scene = scene;
     this.profile = profile;
     this.gridPos = { x, y };
     this.tileSize = tileSize;
+    this.maxHp = profile.baseStats.hp;
+    this.hp = this.maxHp;
 
     // LoS-aware range overlay
     this.rangeGraphics = scene.add.graphics();
@@ -109,8 +120,10 @@ export class Tower {
     this.rangeGraphics.strokePath();
   }
 
-  update(time: number, enemies: Enemy[], map: DijkstraMap) {
-    const fireCooldownMs = 1000 / this.profile.baseStats.attackSpeed;
+  update(time: number, enemies: Enemy[], map: DijkstraMap, towers: Tower[] = []) {
+    this.updateSkills(time, enemies, map, towers);
+    const speedBoost = towers.reduce((boost, tower) => boost + tower.getSpeedBoostFor(this, time), 0);
+    const fireCooldownMs = 1000 / (this.profile.baseStats.attackSpeed * (1 + speedBoost));
     if (time - this.lastFiredTime < fireCooldownMs) return;
 
     const inRange = enemies.filter(e => {
@@ -124,7 +137,7 @@ export class Tower {
 
     const target = this.selectTarget(inRange, map);
     if (target) {
-      this.fire(target);
+      this.fire(target, enemies, map, towers);
       this.lastFiredTime = time;
     }
   }
@@ -171,7 +184,7 @@ export class Tower {
     }
   }
 
-  private fire(target: Enemy) {
+  private fire(target: Enemy, enemies: Enemy[], map: DijkstraMap, towers: Tower[]) {
     const line = this.scene.add.line(
       0, 0,
       this.sprite.x, this.sprite.y,
@@ -186,6 +199,106 @@ export class Tower {
       onComplete: () => line.destroy()
     });
 
-    target.takeDamage(this.profile.baseStats.attack);
+    this.attackCount++;
+    let damageMultiplier = this.nextDamageMultiplier;
+    const aoeMultiplier = this.nextAoeMultiplier;
+    this.nextDamageMultiplier = 1;
+    this.nextAoeMultiplier = 1;
+
+    if (this.profile.id === 'kiu' && this.attackCount % 3 === 0) {
+      damageMultiplier *= 2;
+      VisualFX.burstParticles(this.scene, this.sprite.x, this.sprite.y, 0xff9800);
+    }
+
+    const attackBoost = towers.reduce((boost, tower) => boost + tower.getAttackBoostFor(this, towers, map), 0);
+    const damage = this.profile.baseStats.attack * (1 + attackBoost) * damageMultiplier;
+    target.takeDamage(damage);
+    if (aoeMultiplier > 1) {
+      for (const enemy of enemies) {
+        if (enemy !== target && enemy.isActive && this.isInRange(enemy)) enemy.takeDamage(damage * aoeMultiplier);
+      }
+    }
+  }
+
+  private updateSkills(time: number, enemies: Enemy[], map: DijkstraMap, towers: Tower[]) {
+    for (const skill of this.profile.skills ?? []) {
+      if (skill.type === 'passive') {
+        const allies = this.getAllies(towers, map);
+        const lowAlly = allies.some(tower => tower.hp < tower.maxHp * 0.5);
+        const active = skill.passiveTrigger === 'always' ||
+          (skill.passiveTrigger === 'ally_nearby' && allies.length >= (this.profile.id === 'gretch' ? 2 : 1)) ||
+          (skill.passiveTrigger === 'low_hp' && (this.hp < this.maxHp * 0.5 || lowAlly));
+        const wasActive = this.passiveReady.get(skill.id) ?? false;
+        this.passiveReady.set(skill.id, active);
+        if (active && !wasActive && skill.particleColor !== undefined) {
+          VisualFX.burstParticles(this.scene, this.sprite.x, this.sprite.y, skill.particleColor);
+        }
+        if (active && this.profile.id === 'gretch' && skill.effect.aoeMultiplier && this.nextAoeMultiplier === 1) {
+          this.nextAoeMultiplier = skill.effect.aoeMultiplier;
+        }
+        if (active && skill.effect.healAmount && lowAlly && (this.skillCooldowns.get(skill.id) ?? 0) <= time) {
+          const target = allies.filter(tower => tower.hp < tower.maxHp * 0.5).sort((a, b) => a.hp - b.hp)[0];
+          if (target) {
+            target.heal(skill.effect.healAmount);
+            this.skillCooldowns.set(skill.id, time + 1000);
+          }
+        }
+      } else if ((this.skillCooldowns.get(skill.id) ?? 0) <= time) {
+        this.activateSkill(skill, time, enemies, map, towers);
+        this.skillCooldowns.set(skill.id, time + (skill.cooldownMs ?? 0));
+      }
+    }
+  }
+
+  private activateSkill(skill: NonNullable<CharacterProfile['skills']>[number], time: number, enemies: Enemy[], map: DijkstraMap, towers: Tower[]) {
+    this.activeEffects.set(skill.id, time + 3000);
+    if (skill.flavorText) VisualFX.floatText(this.scene, this.sprite.x, this.sprite.y, skill.flavorText, '#ffe082');
+    if (skill.effect.damageMultiplier && this.profile.id !== 'cesar') this.nextDamageMultiplier = skill.effect.damageMultiplier;
+    if (skill.effect.healAmount) {
+      const target = this.getAllies(towers, map).sort((a, b) => a.hp - b.hp)[0];
+      target?.heal(skill.effect.healAmount);
+    }
+    if (skill.effect.damageMultiplier === 4) {
+      const target = enemies.filter(enemy => enemy.isActive && this.isInRange(enemy))
+        .sort((a, b) => Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, a.sprite.x, a.sprite.y) - Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, b.sprite.x, b.sprite.y))[0];
+      target?.takeDamage(this.profile.baseStats.attack * 4);
+    }
+    if (skill.effect.aoeMultiplier && this.profile.id === 'gretch') {
+      for (const enemy of enemies) if (enemy.isActive && this.isInRange(enemy)) enemy.takeDamage(this.profile.baseStats.attack * 2);
+    }
+  }
+
+  private getAllies(towers: Tower[], map: DijkstraMap) {
+    return towers.filter(tower => tower !== this &&
+      Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, tower.sprite.x, tower.sprite.y) <= this.profile.baseStats.range &&
+      this.hasLineOfSight(this.gridPos.x, this.gridPos.y, tower.gridPos.x, tower.gridPos.y, map));
+  }
+
+  private isInRange(enemy: Enemy) {
+    return Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, enemy.sprite.x, enemy.sprite.y) <= this.profile.baseStats.range;
+  }
+
+  getAttackBoostFor(target: Tower, towers: Tower[], map: DijkstraMap) {
+    let boost = 0;
+    for (const skill of this.profile.skills ?? []) {
+      const inRange = this.getAllies(towers, map).includes(target);
+      const passive = skill.type === 'passive' && this.passiveReady.get(skill.id) && inRange;
+      const active = skill.type === 'active' && (this.activeEffects.get(skill.id) ?? 0) > this.scene.time.now && inRange;
+      if (passive || active) boost += skill.effect.attackBoost ?? 0;
+    }
+    return boost;
+  }
+
+  getSpeedBoostFor(target: Tower, time: number) {
+    let boost = 0;
+    for (const skill of this.profile.skills ?? []) {
+      const inRange = Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, target.sprite.x, target.sprite.y) <= this.profile.baseStats.range;
+      if (skill.type === 'active' && inRange && (this.activeEffects.get(skill.id) ?? 0) > time) boost += skill.effect.speedBoost ?? 0;
+    }
+    return boost;
+  }
+
+  heal(amount: number) {
+    this.hp = Math.min(this.maxHp, this.hp + amount);
   }
 }

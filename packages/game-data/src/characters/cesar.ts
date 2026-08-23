@@ -18,4 +18,8 @@ export const Cesar: CharacterProfile = {
     attackSpeed: 0.6,   // Lento, pesado — golpes de espadón
     moveSpeed: 0,
   },
+  skills: [
+    { id: "shonen-protagonist", name: "Protagonista de Shonen", type: "passive", passiveTrigger: "low_hp", particleColor: 0xffffff, effect: { defenseBoost: 0.8 } },
+    { id: "attack-name", name: "¡NOMBRE DEL ATAQUE!", type: "active", cooldownMs: 11000, flavorText: "¡SEGUNDO ARCO!", effect: { damageMultiplier: 4 } },
+  ],
 };

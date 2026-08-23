@@ -18,4 +18,8 @@ export const Tribu: CharacterProfile = {
     attackSpeed: 1.0,
     moveSpeed: 0,
   },
+  skills: [
+    { id: "tactical-adaptation", name: "Adaptación Táctica", type: "passive", passiveTrigger: "always", particleColor: 0x42a5f5, effect: { attackBoost: 0.15 } },
+    { id: "regroup", name: "¡Reagrupación!", type: "active", cooldownMs: 9000, flavorText: "¡Reagrupación!", effect: { speedBoost: 0.5 } },
+  ],
 };

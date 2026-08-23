@@ -17,4 +17,8 @@ export const Angel: CharacterProfile = {
     attackSpeed: 0.8,  // Moderate attack speed
     moveSpeed: 0,      // Static tower-like placement
   },
+  skills: [
+    { id: "blessing", name: "Bendición", type: "passive", passiveTrigger: "ally_nearby", particleColor: 0xffd54f, effect: { attackBoost: 0.2 } },
+    { id: "for-nya", name: "¡Por el Nya!", type: "active", cooldownMs: 8000, flavorText: "¡Por el Nya!", effect: { attackBoost: 0.4 } },
+  ],
 };

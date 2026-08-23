@@ -18,4 +18,8 @@ export const Kiu: CharacterProfile = {
     attackSpeed: 1.4,   // Rápido pero preciso
     moveSpeed: 0,
   },
+  skills: [
+    { id: "experimental-ammo", name: "Munición Experimental", type: "passive", passiveTrigger: "on_attack", particleColor: 0xff9800, effect: { damageMultiplier: 2 } },
+    { id: "idea", name: "¡Tengo una idea!", type: "active", cooldownMs: 10000, flavorText: "¡Tengo una idea!", effect: { damageMultiplier: 3 } },
+  ],
 };

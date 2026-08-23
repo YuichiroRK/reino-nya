@@ -17,4 +17,8 @@ export const Lucy: CharacterProfile = {
     attackSpeed: 0.9,
     moveSpeed: 0,      // Static tower-like placement
   },
+  skills: [
+    { id: "sweet-comfort", name: "Dulce Consuelo", type: "passive", passiveTrigger: "low_hp", particleColor: 0x66bb6a, effect: { healAmount: 30 } },
+    { id: "shared-dream", name: "Sueño Compartido", type: "active", cooldownMs: 9000, flavorText: "Quizás no pueda luchar…", effect: { healAmount: 50 } },
+  ],
 };

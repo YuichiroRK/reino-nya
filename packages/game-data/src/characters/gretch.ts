@@ -18,4 +18,8 @@ export const Gretch: CharacterProfile = {
     attackSpeed: 0.7,   // Ataques lentos pero devastadores en área
     moveSpeed: 0,
   },
+  skills: [
+    { id: "enthusiasm", name: "Entusiasmo", type: "passive", passiveTrigger: "ally_nearby", particleColor: 0xec407a, effect: { aoeMultiplier: 2 } },
+    { id: "lets-go", name: "¡Vamos, Nya!", type: "active", cooldownMs: 9000, flavorText: "¡Vamos, Nya!", effect: { aoeMultiplier: 1 } },
+  ],
 };

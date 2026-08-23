@@ -130,7 +130,7 @@ class MainScene extends Phaser.Scene {
   update(time: number, delta: number) {
     // Ciclo de combate
     for (const tower of this.towers) {
-      tower.update(time, this.enemies, this.map);
+      tower.update(time, this.enemies, this.map, this.towers);
     }
   }
 

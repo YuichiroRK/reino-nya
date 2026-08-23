@@ -53,5 +53,29 @@ export interface CharacterProfile {
   damageType: DamageType;
   baseStats: BaseStats;
   description: string;
-  // Further details like skills will be added here
+  skills?: Skill[];
+}
+
+// ─── Skill System ─────────────────────────────────────────────────────────────
+
+export type PassiveTrigger = 'always' | 'ally_nearby' | 'on_attack' | 'low_hp';
+
+export interface SkillEffect {
+  attackBoost?: number;
+  defenseBoost?: number;
+  speedBoost?: number;
+  healAmount?: number;
+  aoeMultiplier?: number;
+  damageMultiplier?: number;
+}
+
+export interface Skill {
+  id: string;
+  name: string;
+  type: 'passive' | 'active';
+  passiveTrigger?: PassiveTrigger;
+  cooldownMs?: number;
+  particleColor?: number;
+  flavorText?: string;
+  effect: SkillEffect;
 }
