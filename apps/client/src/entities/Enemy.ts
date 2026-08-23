@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { SacredGem } from './SacredGem';
+import { EnemyProfile } from '@td-nya/shared';
 
 export class Enemy {
   public sprite: Phaser.GameObjects.Rectangle;
@@ -8,14 +9,19 @@ export class Enemy {
   public maxHp: number;
   public speed: number;
   public isActive: boolean;
-  public attackDamage = 10;
+  public readonly profile: EnemyProfile;
+  public attackDamage: number;
+  public targetGemIndex: number;
   private lastGemAttack = 0;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number) {
+  constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, profile: EnemyProfile, targetGemIndex = 0, difficulty = 1) {
+    this.profile = profile;
     this.gridPos = { x, y };
-    this.maxHp = 100;
+    this.maxHp = profile.maxHp * difficulty;
     this.hp = this.maxHp;
-    this.speed = 1;
+    this.speed = profile.speed;
+    this.attackDamage = profile.attackDamage * difficulty;
+    this.targetGemIndex = targetGemIndex;
     this.isActive = true;
 
     this.sprite = scene.add.rectangle(
@@ -23,21 +29,21 @@ export class Enemy {
       y * tileSize + tileSize / 2,
       tileSize * 0.6,
       tileSize * 0.6,
-      0xff0000 // Rojo
+      profile.color
     );
   }
 
   takeDamage(amount: number) {
     if (!this.isActive) return;
     
-    this.hp -= amount;
+    this.hp -= Math.max(1, amount - (this.profile.defense ?? 0));
     
     // Feedback visual (parpadeo blanco)
     const scene = this.sprite.scene;
     this.sprite.setFillStyle(0xffffff);
     scene.time.delayedCall(100, () => {
       if (this.isActive) {
-        this.sprite.setFillStyle(0xff0000);
+         this.sprite.setFillStyle(this.profile.color);
         // Bajar opacidad según vida
         this.sprite.setAlpha(Math.max(0.3, this.hp / this.maxHp));
       }
@@ -54,7 +60,7 @@ export class Enemy {
   }
 
   attackGem(gem: SacredGem, time: number) {
-    if (time - this.lastGemAttack < 1000) return;
+    if (time - this.lastGemAttack < this.profile.attackCooldownMs) return;
     gem.takeDamage(this.attackDamage);
     this.lastGemAttack = time;
   }

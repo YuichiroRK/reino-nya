@@ -17,4 +17,5 @@ export * from './characters/tribu';
 export * from './characters/kiu';
 export * from './characters/gretch';
 export * from './characters/cesar';
+export * from './enemies';
 export * from './pathfinding/DijkstraMap';

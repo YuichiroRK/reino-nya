@@ -79,3 +79,30 @@ export interface Skill {
   flavorText?: string;
   effect: SkillEffect;
 }
+
+export type EnemyType = 'basic' | 'runner' | 'armored' | 'flying' | 'boss';
+export type EnemyMovement = 'ground' | 'flying';
+
+export interface EnemyProfile {
+  id: string;
+  name: string;
+  type: EnemyType;
+  movement: EnemyMovement;
+  maxHp: number;
+  speed: number;
+  attackDamage: number;
+  attackCooldownMs: number;
+  color: number;
+  defense?: number;
+}
+
+export interface WaveEntry {
+  enemyId: string;
+  count: number;
+  intervalMs?: number;
+}
+
+export interface WaveDefinition {
+  number: number;
+  entries: WaveEntry[];
+}

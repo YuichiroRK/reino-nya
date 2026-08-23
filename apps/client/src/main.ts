@@ -1,10 +1,10 @@
 import Phaser from 'phaser';
-import { DijkstraMap, Angel, Lucy, Tribu, Kiu, Gretch, Cesar } from '@td-nya/game-data';
+import { DijkstraMap, Angel, Lucy, Tribu, Kiu, Gretch, Cesar, EnemyData, Waves } from '@td-nya/game-data';
 import { Enemy } from './entities/Enemy';
 import { Tower } from './entities/Tower';
 import { SacredGem } from './entities/SacredGem';
 import { WaveSystem } from './systems/WaveSystem';
-import { CharacterProfile, Rarity, TargetingPriority } from '@td-nya/shared';
+import { CharacterProfile, Rarity, TargetingPriority, WaveDefinition } from '@td-nya/shared';
 
 const CHARACTER_MAP: Record<string, CharacterProfile> = {
   angel: Angel,
@@ -27,6 +27,7 @@ class MainScene extends Phaser.Scene {
   private gems: SacredGem[] = [];
   private waveSystem = new WaveSystem();
   private gameState: 'playing' | 'victory' | 'defeat' = 'playing';
+  private isPaused = false;
   
   // Referencias a la UI HTML
   private selectedTower: Tower | null = null;
@@ -39,6 +40,7 @@ class MainScene extends Phaser.Scene {
   private uiTowerLimit!: HTMLElement;
   private uiWaveStatus!: HTMLElement;
   private uiGemStatus!: HTMLElement;
+  private uiWaveButton!: HTMLButtonElement;
 
   constructor() {
     super({ key: 'MainScene' });
@@ -119,7 +121,7 @@ class MainScene extends Phaser.Scene {
         } else {
           // Click Izquierdo: Solo spawnear si es caminable
           if (this.map.grid[y][x].isWalkable) {
-            const enemy = new Enemy(this, x, y, this.tileSize);
+            const enemy = new Enemy(this, x, y, this.tileSize, EnemyData.basic);
             this.enemies.push(enemy);
           } else {
             this.closeUIPanel();
@@ -131,7 +133,7 @@ class MainScene extends Phaser.Scene {
     });
 
     this.time.addEvent({
-      delay: 400,
+      delay: 250,
       callback: this.moveEnemies,
       callbackScope: this,
       loop: true
@@ -144,8 +146,8 @@ class MainScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number) {
-    if (this.gameState !== 'playing') return;
-    this.waveSystem.update(time, this.enemies.filter(enemy => enemy.isActive).length, (wave, count) => this.spawnWave(wave, count));
+    if (this.gameState !== 'playing' || this.isPaused) return;
+    this.waveSystem.update(time, this.enemies.filter(enemy => enemy.isActive).length, Waves, wave => this.spawnWave(wave));
     // Ciclo de combate
     for (const tower of this.towers) {
       tower.update(time, this.enemies, this.map, this.towers);
@@ -165,9 +167,14 @@ class MainScene extends Phaser.Scene {
     this.uiTowerLimit = document.getElementById('tower-limit')!;
     this.uiWaveStatus = document.getElementById('wave-status')!;
     this.uiGemStatus = document.getElementById('gem-status')!;
+    this.uiWaveButton = document.getElementById('wave-button') as HTMLButtonElement;
 
     this.uiCloseBtn.addEventListener('click', () => this.closeUIPanel());
     this.uiRemoveBtn.addEventListener('click', () => this.removeSelectedTower());
+    this.uiWaveButton.addEventListener('click', () => {
+      this.isPaused = !this.isPaused;
+      this.uiWaveButton.innerText = this.isPaused ? 'Continuar' : 'Pausar';
+    });
     this.updateTowerLimit();
 
     this.uiTargetingSelect.addEventListener('change', (e) => {
@@ -269,15 +276,15 @@ class MainScene extends Phaser.Scene {
     this.updateTowerLimit();
   }
 
-  private spawnWave(wave: number, count: number) {
+  private spawnWave(wave: WaveDefinition) {
     const spawnPoints = [{ x: 0, y: 0 }, { x: 19, y: 0 }, { x: 0, y: 19 }, { x: 19, y: 19 }, { x: 10, y: 0 }, { x: 19, y: 10 }, { x: 0, y: 10 }];
-    for (let index = 0; index < count; index++) {
-      const point = spawnPoints[index % spawnPoints.length];
-      const enemy = new Enemy(this, point.x, point.y, this.tileSize);
-      enemy.maxHp = 100 + wave * 30;
-      enemy.hp = enemy.maxHp;
-      enemy.attackDamage = 10 + wave * 2;
-      this.enemies.push(enemy);
+    let spawnIndex = 0;
+    for (const entry of wave.entries) {
+      const profile = EnemyData[entry.enemyId] ?? EnemyData.basic;
+      for (let count = 0; count < entry.count; count++) {
+        const point = spawnPoints[spawnIndex++ % spawnPoints.length];
+        this.enemies.push(new Enemy(this, point.x, point.y, this.tileSize, profile, spawnIndex % this.gems.length, 1 + wave.number * 0.08));
+      }
     }
   }
 
@@ -302,12 +309,17 @@ class MainScene extends Phaser.Scene {
 
     for (const enemy of this.enemies) {
       if (enemy.gridPos.x === 10 && enemy.gridPos.y === 10) {
-        const gem = this.gems.find(candidate => !candidate.isDestroyed);
+        const assignedGem = this.gems[enemy.targetGemIndex];
+        const gem = assignedGem && !assignedGem.isDestroyed
+          ? assignedGem
+          : this.gems.find(candidate => !candidate.isDestroyed);
         if (gem) enemy.attackGem(gem, this.time.now);
         continue;
       }
 
-      const nextNode = this.map.getNextStep(enemy.gridPos.x, enemy.gridPos.y);
+      const nextNode = enemy.profile.movement === 'flying'
+        ? this.getDirectStep(enemy.gridPos.x, enemy.gridPos.y)
+        : this.map.getNextStep(enemy.gridPos.x, enemy.gridPos.y);
 
       if (nextNode) {
         enemy.gridPos.x = nextNode.x;
@@ -322,6 +334,10 @@ class MainScene extends Phaser.Scene {
         });
       }
     }
+  }
+
+  private getDirectStep(x: number, y: number) {
+    return { x: x + Math.sign(10 - x), y: y + Math.sign(10 - y) };
   }
 }
 
