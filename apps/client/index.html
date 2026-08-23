@@ -84,6 +84,37 @@
       border-color: var(--primary-color);
       box-shadow: 0 0 10px var(--primary-color);
     }
+
+    #char-select-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow: hidden;
+      max-width: 0;
+      opacity: 0;
+      transition: max-width 0.3s ease, opacity 0.3s ease;
+    }
+    
+    #char-select-wrapper.visible {
+      max-width: 220px;
+      opacity: 1;
+    }
+
+    #char-select {
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      color: white;
+      font-size: 0.85rem;
+      outline: none;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    
+    #char-select:focus {
+      border-color: var(--primary-color);
+    }
     
     #ui-panel.active {
       right: 20px; /* Visible */
@@ -144,6 +175,16 @@
   
   <div id="test-toolbar">
     <button class="tool-btn active" data-tool="tower">🗼 Torre</button>
+    <div id="char-select-wrapper" class="visible">
+      <select id="char-select">
+        <option value="angel">👑 Angel (SSR)</option>
+        <option value="tribu">🐱 Tribu (SSR)</option>
+        <option value="gretch">🌸 Gretch (SSR)</option>
+        <option value="kiu">🎯 Kiu (SR)</option>
+        <option value="lucy">🦋 Lucy (SR)</option>
+        <option value="cesar">⚔️ Cesar (R)</option>
+      </select>
+    </div>
     <button class="tool-btn" data-tool="wall">🧱 Muro</button>
   </div>
 

@@ -1,8 +1,17 @@
 import Phaser from 'phaser';
-import { DijkstraMap, Angel } from '@td-nya/game-data';
+import { DijkstraMap, Angel, Lucy, Tribu, Kiu, Gretch, Cesar } from '@td-nya/game-data';
 import { Enemy } from './entities/Enemy';
 import { Tower } from './entities/Tower';
-import { TargetingPriority } from '@td-nya/shared';
+import { CharacterProfile, TargetingPriority } from '@td-nya/shared';
+
+const CHARACTER_MAP: Record<string, CharacterProfile> = {
+  angel: Angel,
+  lucy: Lucy,
+  tribu: Tribu,
+  kiu: Kiu,
+  gretch: Gretch,
+  cesar: Cesar,
+};
 
 class MainScene extends Phaser.Scene {
   private map!: DijkstraMap;
@@ -11,6 +20,7 @@ class MainScene extends Phaser.Scene {
   private gridRects: Phaser.GameObjects.Rectangle[][] = [];
   private tileSize = 32;
   private activeTool: 'tower' | 'wall' = 'tower';
+  private selectedCharacter: CharacterProfile = Angel;
   
   // Referencias a la UI HTML
   private selectedTower: Tower | null = null;
@@ -76,7 +86,7 @@ class MainScene extends Phaser.Scene {
           // Usar Herramienta Activa
           if (this.activeTool === 'tower') {
             if (this.map.grid[y][x].isWalkable && !(x === 10 && y === 10)) {
-              const tower = new Tower(this, x, y, this.tileSize, Angel, (t) => this.openUIPanel(t));
+              const tower = new Tower(this, x, y, this.tileSize, this.selectedCharacter, (t) => this.openUIPanel(t));
               this.towers.push(tower);
             }
           } else if (this.activeTool === 'wall') {
@@ -136,13 +146,28 @@ class MainScene extends Phaser.Scene {
 
     // Toolbar logic
     const toolBtns = document.querySelectorAll('.tool-btn');
+    const charSelectWrapper = document.getElementById('char-select-wrapper')!;
+    const charSelect = document.getElementById('char-select') as HTMLSelectElement;
+
     toolBtns.forEach(btn => {
       btn.addEventListener('click', (e) => {
         toolBtns.forEach(b => b.classList.remove('active'));
         const target = e.currentTarget as HTMLElement;
         target.classList.add('active');
         this.activeTool = target.dataset.tool as 'tower' | 'wall';
+
+        // Mostrar/ocultar selector de personaje
+        if (this.activeTool === 'tower') {
+          charSelectWrapper.classList.add('visible');
+        } else {
+          charSelectWrapper.classList.remove('visible');
+        }
       });
+    });
+
+    charSelect.addEventListener('change', (e) => {
+      const val = (e.target as HTMLSelectElement).value;
+      this.selectedCharacter = CHARACTER_MAP[val] ?? Angel;
     });
   }
 

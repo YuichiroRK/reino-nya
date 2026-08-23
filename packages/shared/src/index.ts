@@ -2,14 +2,12 @@ export const SHARED_VERSION = "1.0.0";
 
 // Basic enums for targeting
 export enum TargetingPriority {
-  MOST_HP = "HIGHEST_HP",
-  LEAST_HP = "LOWEST_HP",
-  CLOSEST_TO_TOWER = "CLOSEST_TO_TOWER",
+  HIGHEST_HP        = "HIGHEST_HP",
+  LOWEST_HP         = "LOWEST_HP",
+  CLOSEST_TO_TOWER  = "CLOSEST_TO_TOWER",
   FARTHEST_FROM_CORE = "FARTHEST_FROM_CORE",
-  STRONGEST = "STRONGEST",
-  WEAKEST = "WEAKEST",
-  CLOSEST_TO_CORE = "CLOSEST_TO_CORE",
-  FASTEST = "FASTEST"
+  CLOSEST_TO_CORE   = "CLOSEST_TO_CORE",
+  FASTEST           = "FASTEST",
 }
 
 // Character Enums
