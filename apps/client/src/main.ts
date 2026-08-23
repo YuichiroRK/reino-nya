@@ -42,6 +42,10 @@ class MainScene extends Phaser.Scene {
   private uiTowerLimit!: HTMLElement;
   private uiWaveStatus!: HTMLElement;
   private uiGemStatus!: HTMLElement;
+  private uiWaveProgress!: HTMLElement;
+  private uiGemProgress!: HTMLElement;
+  private uiEnemyStatus!: HTMLElement;
+  private uiGameState!: HTMLElement;
   private uiWaveButton!: HTMLButtonElement;
   private uiCoins!: HTMLElement;
   private uiSkills!: HTMLElement;
@@ -180,6 +184,10 @@ class MainScene extends Phaser.Scene {
     this.uiTowerLimit = document.getElementById('tower-limit')!;
     this.uiWaveStatus = document.getElementById('wave-status')!;
     this.uiGemStatus = document.getElementById('gem-status')!;
+    this.uiWaveProgress = document.getElementById('wave-progress')!;
+    this.uiGemProgress = document.getElementById('gem-progress')!;
+    this.uiEnemyStatus = document.getElementById('enemy-status')!;
+    this.uiGameState = document.getElementById('game-state')!;
     this.uiWaveButton = document.getElementById('wave-button') as HTMLButtonElement;
     this.uiCoins = document.getElementById('coin-status')!;
     this.uiSkills = document.getElementById('skill-status')!;
@@ -189,6 +197,8 @@ class MainScene extends Phaser.Scene {
     this.uiWaveButton.addEventListener('click', () => {
       this.isPaused = !this.isPaused;
       this.uiWaveButton.innerText = this.isPaused ? 'Continuar' : 'Pausar';
+      this.uiGameState.innerText = this.isPaused ? 'PAUSADO' : 'EN JUEGO';
+      this.uiGameState.style.color = this.isPaused ? '#fcd34d' : '#a7f3d0';
     });
     this.updateTowerLimit();
     this.updateEconomyUI();
@@ -247,7 +257,7 @@ class MainScene extends Phaser.Scene {
   openUIPanel(tower: Tower) {
     this.selectedTower = tower;
     this.uiTowerName.innerText = tower.profile.name + ' - ' + tower.profile.title;
-    this.uiTowerRole.innerText = 'Rol: ' + tower.profile.roles.join(', ') + ' | Daño: ' + tower.profile.baseStats.attack;
+    this.uiTowerRole.innerText = 'Rol: ' + tower.profile.roles.join(', ') + ' | Daño: ' + tower.profile.baseStats.attack + ' | Vida: ' + tower.hp + '/' + tower.maxHp;
     
     // Sincronizar el select
     this.uiTargetingSelect.value = tower.targetingPriority;
@@ -258,9 +268,10 @@ class MainScene extends Phaser.Scene {
 
   private updateSkillUI(tower: Tower) {
     this.uiSkills.innerHTML = tower.getSkillStatuses(this.time.now).map(skill => {
-      if (skill.type === 'passive') return `<div>${skill.name}: Pasiva</div>`;
+      if (skill.type === 'passive') return `<div class="skill-card passive"><span>${skill.name}</span><span class="skill-state">PASIVA</span></div>`;
       const status = skill.remainingMs > 0 ? `${(skill.remainingMs / 1000).toFixed(1)}s` : 'Lista';
-      return `<div>${skill.name}: ${status}${skill.active ? ' (Activa)' : ''}</div>`;
+      const stateClass = skill.remainingMs > 0 ? 'cooldown' : 'ready';
+      return `<div class="skill-card ${stateClass}"><span>${skill.name}</span><span class="skill-state">${skill.active ? 'ACTIVA' : status}</span></div>`;
     }).join('');
   }
 
@@ -333,12 +344,19 @@ class MainScene extends Phaser.Scene {
 
   private updateGameStatus() {
     const aliveGems = this.gems.filter(gem => !gem.isDestroyed).length;
+    const activeEnemies = this.enemies.filter(enemy => enemy.isActive).length;
     this.uiWaveStatus.innerText = `Oleada: ${this.waveSystem.wave}/${this.waveSystem.maxWaves}`;
     this.uiGemStatus.innerText = `Joyas: ${aliveGems}/3`;
+    this.uiEnemyStatus.innerText = `${activeEnemies}`;
+    this.uiWaveProgress.style.width = `${(this.waveSystem.wave / this.waveSystem.maxWaves) * 100}%`;
+    this.uiGemProgress.style.width = `${(aliveGems / this.gems.length) * 100}%`;
   }
 
   private endGame(state: 'victory' | 'defeat') {
     this.gameState = state;
+    this.uiGameState.innerText = state === 'victory' ? 'VICTORIA' : 'DERROTA';
+    this.uiGameState.style.color = state === 'victory' ? '#86efac' : '#fca5a5';
+    this.uiWaveButton.disabled = true;
     const message = state === 'victory' ? '¡VICTORIA! Todas las oleadas superadas' : 'DERROTA: Las tres joyas fueron destruidas';
     this.add.text(this.scale.width / 2, this.scale.height / 2, message, {
       fontSize: '26px', color: state === 'victory' ? '#a5d6a7' : '#ef9a9a',
