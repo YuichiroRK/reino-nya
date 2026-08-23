@@ -119,6 +119,12 @@ class MainScene extends Phaser.Scene {
       const x = Math.floor(pointer.x / this.tileSize);
       const y = Math.floor(pointer.y / this.tileSize);
 
+      const clickedTower = this.towers.find(tower => tower.sprite.getBounds().contains(pointer.x, pointer.y));
+      if (clickedTower) {
+        this.openUIPanel(clickedTower);
+        return;
+      }
+
       if (x >= 0 && x < cols && y >= 0 && y < rows) {
         if (pointer.rightButtonDown()) {
           // Usar Herramienta Activa
@@ -242,10 +248,13 @@ class MainScene extends Phaser.Scene {
     this.uiSkills.addEventListener('click', event => {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-skill-id]');
       const skill = this.selectedTower?.profile.skills?.find(item => item.id === button?.dataset.skillId);
-      if (skill) {
-        this.uiSkillInfo.innerHTML = `<strong>${skill.name}</strong>${skill.description ?? this.describeSkill(skill)}`;
-        this.uiSkillInfo.classList.add('visible');
-      }
+      if (skill) this.showSkillInfo(skill);
+    });
+    this.uiSkills.addEventListener('contextmenu', event => {
+      event.preventDefault();
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-skill-id]');
+      const skill = this.selectedTower?.profile.skills?.find(item => item.id === button?.dataset.skillId);
+      if (skill) this.showSkillInfo(skill);
     });
     this.updateTowerLimit();
     this.updateEconomyUI();
@@ -335,6 +344,11 @@ class MainScene extends Phaser.Scene {
     if (effect.rangeBoost) details.push(`+${Math.round(effect.rangeBoost * 100)}% de alcance`);
     if (effect.slowPercent) details.push(`ralentiza ${Math.round(effect.slowPercent * 100)}%`);
     return details.length ? details.join(' · ') : 'Efecto especial de combate.';
+  }
+
+  private showSkillInfo(skill: NonNullable<CharacterProfile['skills']>[number]) {
+    this.uiSkillInfo.innerHTML = `<strong>${skill.name}</strong>${skill.description ?? this.describeSkill(skill)}`;
+    this.uiSkillInfo.classList.add('visible');
   }
 
   closeUIPanel() {
