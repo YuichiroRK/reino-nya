@@ -104,6 +104,8 @@ export interface EnemyProfile {
   defense?: number;
   reward: number;
   ability?: EnemyAbility;
+  physicalDamage?: number;
+  magicDamage?: number;
 }
 
 export interface WaveEntry {

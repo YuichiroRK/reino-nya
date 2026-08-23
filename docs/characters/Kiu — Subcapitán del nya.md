@@ -177,7 +177,7 @@ Tiene muchas opciones.
 
 ## Habilidad característica
 
-### "¡Tengo una idea!"
+### "¡La has liado!"
 
 Kiu cambia rápidamente de tipo de munición y realiza un disparo experimental.
 
@@ -248,7 +248,7 @@ Su equipamiento debería transmitir:
 
 ## Frase característica
 
-> **"Tengo una idea."**
+> **"La has liado."**
 
 La frase que probablemente más miedo genere entre los demás miembros del Nya.
 

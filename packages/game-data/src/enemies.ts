@@ -6,7 +6,7 @@ export const EnemyData: Record<string, EnemyProfile> = {
   armored: { id: 'armored', name: 'Goblin blindado', type: 'armored', movement: 'ground', maxHp: 260, speed: 0.7, attackDamage: 18, attackCooldownMs: 1200, color: 0x78909c, defense: 20, reward: 40, ability: 'shield' },
   flying: { id: 'flying', name: 'Murcielago', type: 'flying', movement: 'flying', maxHp: 90, speed: 1.5, attackDamage: 12, attackCooldownMs: 900, color: 0xce93d8, reward: 30, ability: 'swarm' },
   boss: { id: 'boss', name: 'Jefe Goblin', type: 'boss', movement: 'ground', maxHp: 1000, speed: 0.5, attackDamage: 35, attackCooldownMs: 1500, color: 0x7e57c2, defense: 30, reward: 150, ability: 'rage' },
-  pibble: { id: 'pibble', name: 'Pibble Goblin', type: 'boss', movement: 'ground', maxHp: 1800, speed: 0.55, attackDamage: 40, attackCooldownMs: 1500, color: 0x9c27b0, defense: 35, reward: 250, ability: 'rage' },
+  pibble: { id: 'pibble', name: 'Pibble Goblin', type: 'boss', movement: 'ground', maxHp: 1800, speed: 0.55, attackDamage: 100, attackCooldownMs: 1500, color: 0x9c27b0, defense: 35, reward: 250, ability: 'rage', physicalDamage: 55, magicDamage: 45 },
 };
 
 export const Waves = [

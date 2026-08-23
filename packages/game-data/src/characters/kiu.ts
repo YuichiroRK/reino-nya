@@ -19,9 +19,9 @@ export const Kiu: CharacterProfile = {
     moveSpeed: 0,
   },
   skills: [
-    { id: "experimental-ammo", name: "Munición Experimental", type: "passive", passiveTrigger: "on_attack", particleColor: 0xff9800, effect: { damageMultiplier: 2 } },
-    { id: "idea", name: "¡Tengo una idea!", type: "active", cooldownMs: 10000, flavorText: "¡Tengo una idea!", effect: { damageMultiplier: 3 } },
-    { id: "piercing-bolt", name: "Virote Perforante", type: "active", cooldownMs: 7000, flavorText: "¡Atraviesa todo!", effect: { damageMultiplier: 2, aoeMultiplier: 1 } },
+    { id: "experimental-ammo", name: "Farmear Aura", type: "passive", passiveTrigger: "on_attack", particleColor: 0xff9800, description: "Cada tercer ataque carga munición especial y duplica el daño del disparo.", effect: { damageMultiplier: 2 } },
+    { id: "idea", name: "¡La has liado!", type: "active", cooldownMs: 10000, flavorText: "¡La has liado!", effect: { damageMultiplier: 3 } },
+    { id: "piercing-bolt", name: "Kill 7 billion people", type: "active", cooldownMs: 7000, flavorText: "¡Atraviesa todo!", effect: { damageMultiplier: 2, aoeMultiplier: 1 } },
     { id: "explosive-bolt", name: "Virote Explosivo", type: "active", cooldownMs: 8500, flavorText: "¡Que explote!", effect: { damageMultiplier: 1.5, aoeMultiplier: 2 } },
     { id: "heavy-bolt", name: "Virote Pesado", type: "active", cooldownMs: 12000, flavorText: "Virote pesado.", effect: { damageMultiplier: 4 } },
     { id: "control-bolt", name: "Virote de Control", type: "active", cooldownMs: 9000, flavorText: "No te muevas.", effect: { damageMultiplier: 1.25, slowPercent: 0.35 } },

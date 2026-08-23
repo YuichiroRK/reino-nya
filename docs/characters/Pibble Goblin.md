@@ -15,8 +15,8 @@ Pibble es el primer gran enemigo del Imperio del Nya. No es un goblin rápido: e
 ## Estadísticas iniciales
 
 - **HP base:** 1,800
-- **Daño a joyas:** 40
-- **Daño a torres:** 40
+- **Daño físico:** 55
+- **Daño mágico:** 45
 - **Defensa:** 35
 - **Velocidad:** 0.55
 - **Recompensa:** 250 Aura Points
@@ -38,3 +38,5 @@ Mientras Pibble está activo, representa la amenaza principal de la oleada. Su a
 ## Diseño de combate
 
 Pibble avanza lentamente hacia la fortaleza, recibe varios impactos antes de caer y puede presionar directamente a las torres que bloqueen su ruta. El jugador debe combinar DPS, control y soporte para detenerlo.
+
+Cada ataque combina un golpe físico de su arma con una descarga de magia goblin, por lo que representa una amenaza fuerte tanto para torres resistentes como para unidades con poca defensa mágica.

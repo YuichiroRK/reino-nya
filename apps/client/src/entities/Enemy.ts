@@ -5,7 +5,7 @@ import { HealthBar } from './HealthBar';
 import type { Tower } from './Tower';
 
 export class Enemy {
-  public sprite: Phaser.GameObjects.Rectangle;
+  public sprite: Phaser.GameObjects.Rectangle | Phaser.GameObjects.Image;
   public gridPos: { x: number; y: number };
   public hp: number;
   public maxHp: number;
@@ -30,13 +30,9 @@ export class Enemy {
     this.onDefeated = onDefeated;
     this.isActive = true;
 
-    this.sprite = scene.add.rectangle(
-      x * tileSize + tileSize / 2,
-      y * tileSize + tileSize / 2,
-      tileSize * 0.6,
-      tileSize * 0.6,
-      profile.color
-    );
+    this.sprite = profile.id === 'pibble'
+      ? scene.add.image(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, 'pibble-idle').setDisplaySize(tileSize * 1.35, tileSize * 1.35)
+      : scene.add.rectangle(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, tileSize * 0.6, tileSize * 0.6, profile.color);
     this.healthBar = new HealthBar(scene, 24);
     this.updateHealthBar();
   }
@@ -49,14 +45,16 @@ export class Enemy {
     
     // Feedback visual (parpadeo blanco)
     const scene = this.sprite.scene;
-    this.sprite.setFillStyle(0xffffff);
-    scene.time.delayedCall(100, () => {
-      if (this.isActive) {
-         this.sprite.setFillStyle(this.profile.color);
+    if (this.sprite instanceof Phaser.GameObjects.Rectangle) {
+      this.sprite.setFillStyle(0xffffff);
+      scene.time.delayedCall(100, () => {
+        if (this.isActive && this.sprite instanceof Phaser.GameObjects.Rectangle) {
+           this.sprite.setFillStyle(this.profile.color);
         // Bajar opacidad según vida
         this.sprite.setAlpha(Math.max(0.3, this.hp / this.maxHp));
-      }
-    });
+        }
+      });
+    }
 
     if (this.hp <= 0) {
       this.die();
@@ -86,13 +84,19 @@ export class Enemy {
 
   attackGem(gem: SacredGem, time: number) {
     if (time - this.lastGemAttack < this.profile.attackCooldownMs) return;
-    gem.takeDamage(this.attackDamage);
+    if (this.profile.physicalDamage && this.profile.magicDamage) {
+      gem.takeDamage(this.profile.physicalDamage);
+      gem.takeDamage(this.profile.magicDamage);
+    } else gem.takeDamage(this.attackDamage);
     this.lastGemAttack = time;
   }
 
   attackTower(tower: Tower, time: number) {
     if (time - this.lastGemAttack < this.profile.attackCooldownMs) return;
-    tower.takeDamage(this.attackDamage);
+    if (this.profile.physicalDamage && this.profile.magicDamage) {
+      tower.takeDamage(this.profile.physicalDamage);
+      tower.takeDamage(this.profile.magicDamage);
+    } else tower.takeDamage(this.attackDamage);
     this.lastGemAttack = time;
   }
 }

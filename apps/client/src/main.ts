@@ -103,6 +103,7 @@ class MainScene extends Phaser.Scene {
     })) this.load.image(`${key}-idle`, `/assets/characters/${file}`);
     this.load.image('xavi-human-idle', '/assets/characters/HumanXaviIdle.png');
     this.load.image('xavi-mosasaur-idle', '/assets/characters/MosasaurioXaviIdle.png');
+    this.load.image('pibble-idle', '/assets/characters/PibbleIdle.png');
   }
 
   create() {
@@ -254,7 +255,7 @@ class MainScene extends Phaser.Scene {
       if (this.selectedTower.profile.id === 'xavi') this.uiTowerPortrait.src = `/assets/characters/${this.selectedTower.isTransformed ? 'MosasaurioXaviIdle' : 'HumanXaviIdle'}.png`;
     }
     if (this.selectedEnemy?.isActive) {
-      this.uiEnemyDetails.innerHTML = `<strong>Estado de amenaza</strong>Vida: ${Math.ceil(this.selectedEnemy.hp)}/${this.selectedEnemy.maxHp}<br>Daño: ${Math.ceil(this.selectedEnemy.attackDamage)}<br>Velocidad: ${this.selectedEnemy.speed}<br>Recompensa: ${this.selectedEnemy.profile.reward} Aura Points`;
+      this.uiEnemyDetails.innerHTML = `<strong>Estado de amenaza</strong>Vida: ${Math.ceil(this.selectedEnemy.hp)}/${this.selectedEnemy.maxHp}<br>Daño físico: ${this.selectedEnemy.profile.physicalDamage ?? this.selectedEnemy.attackDamage}<br>Daño mágico: ${this.selectedEnemy.profile.magicDamage ?? 0}<br>Velocidad: ${this.selectedEnemy.speed}<br>Recompensa: ${this.selectedEnemy.profile.reward} Aura Points`;
     }
     if (this.gems.every(gem => gem.isDestroyed)) this.endGame('defeat');
     else if (this.waveSystem.wave >= this.waveSystem.maxWaves && !this.waveSystem.isSpawning && this.enemies.every(enemy => !enemy.isActive)) this.endGame('victory');
@@ -489,10 +490,12 @@ class MainScene extends Phaser.Scene {
     this.uiPanel.classList.add('active', 'enemy-selected');
     this.uiPanel.classList.remove('minimized');
     this.uiMinimizePanel.innerText = '−';
-    this.uiPanel.classList.remove('has-portrait');
+    const hasPortrait = enemy.profile.id === 'pibble';
+    this.uiPanel.classList.toggle('has-portrait', hasPortrait);
+    if (hasPortrait) this.uiTowerPortrait.src = '/assets/characters/PibbleIdle.png';
     this.uiTowerName.innerText = enemy.profile.name;
     this.uiTowerRole.innerText = `Enemigo ${enemy.profile.type} · ${enemy.profile.movement === 'flying' ? 'Volador' : 'Terrestre'}`;
-    this.uiEnemyDetails.innerHTML = `<strong>Estado de amenaza</strong>Vida: ${Math.ceil(enemy.hp)}/${enemy.maxHp}<br>Daño: ${Math.ceil(enemy.attackDamage)}<br>Velocidad: ${enemy.speed}<br>Recompensa: ${enemy.profile.reward} Aura Points`;
+    this.uiEnemyDetails.innerHTML = `<strong>Estado de amenaza</strong>Vida: ${Math.ceil(enemy.hp)}/${enemy.maxHp}<br>Daño físico: ${enemy.profile.physicalDamage ?? enemy.attackDamage}<br>Daño mágico: ${enemy.profile.magicDamage ?? 0}<br>Velocidad: ${enemy.speed}<br>Recompensa: ${enemy.profile.reward} Aura Points`;
   }
 
   private updateSkillUI(tower: Tower) {
