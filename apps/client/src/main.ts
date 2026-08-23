@@ -176,7 +176,7 @@ class MainScene extends Phaser.Scene {
     this.waveSystem.update(time, activeEnemies, Waves, enemyId => this.spawnEnemy(enemyId));
     // Ciclo de combate
     for (const tower of this.towers) {
-      tower.update(time, this.enemies, this.map, this.towers);
+      if (tower.isActive) tower.update(time, this.enemies, this.map, this.towers);
     }
     this.updateGameStatus();
     this.updateEconomyUI();
@@ -400,6 +400,10 @@ class MainScene extends Phaser.Scene {
   moveEnemies() {
     // Limpiar enemigos muertos
     this.enemies = this.enemies.filter(e => e.isActive);
+    for (const tower of this.towers.filter(tower => !tower.isActive)) {
+      this.occupiedCells.delete(`${tower.gridPos.x},${tower.gridPos.y}`);
+    }
+    this.towers = this.towers.filter(tower => tower.isActive);
 
     for (const enemy of this.enemies) {
       if (enemy.gridPos.x === 10 && enemy.gridPos.y === 10) {
@@ -408,6 +412,14 @@ class MainScene extends Phaser.Scene {
           ? assignedGem
           : this.gems.find(candidate => !candidate.isDestroyed);
         if (gem) enemy.attackGem(gem, this.time.now);
+        continue;
+      }
+
+      const attackRange = enemy.profile.type === 'boss' ? 100 : 52;
+      const tower = this.towers.filter(candidate => candidate.isActive && Phaser.Math.Distance.Between(enemy.sprite.x, enemy.sprite.y, candidate.sprite.x, candidate.sprite.y) <= attackRange)
+        .sort((a, b) => Phaser.Math.Distance.Between(enemy.sprite.x, enemy.sprite.y, a.sprite.x, a.sprite.y) - Phaser.Math.Distance.Between(enemy.sprite.x, enemy.sprite.y, b.sprite.x, b.sprite.y))[0];
+      if (tower) {
+        enemy.attackTower(tower, this.time.now);
         continue;
       }
 

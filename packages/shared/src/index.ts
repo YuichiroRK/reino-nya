@@ -67,6 +67,9 @@ export interface SkillEffect {
   healAmount?: number;
   aoeMultiplier?: number;
   damageMultiplier?: number;
+  damageTakenMultiplier?: number;
+  rangeBoost?: number;
+  slowPercent?: number;
 }
 
 export interface Skill {

@@ -20,6 +20,9 @@ export const Gretch: CharacterProfile = {
   },
   skills: [
     { id: "enthusiasm", name: "Entusiasmo", type: "passive", passiveTrigger: "ally_nearby", particleColor: 0xec407a, effect: { aoeMultiplier: 2 } },
+    { id: "princess-magic", name: "Magia de la Princesa", type: "passive", passiveTrigger: "on_attack", particleColor: 0xf48fb1, effect: { attackBoost: 0.1 } },
+    { id: "miracle", name: "Milagro", type: "passive", passiveTrigger: "low_hp", particleColor: 0xff80ab, effect: { attackBoost: 0.25, rangeBoost: 0.2 } },
     { id: "lets-go", name: "¡Vamos, Nya!", type: "active", cooldownMs: 9000, flavorText: "¡Vamos, Nya!", effect: { aoeMultiplier: 1 } },
+    { id: "princess-arc", name: "Arco de la Princesa", type: "active", cooldownMs: 12000, flavorText: "Arco de la Princesa.", effect: { damageMultiplier: 3, aoeMultiplier: 2 } },
   ],
 };

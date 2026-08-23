@@ -21,5 +21,9 @@ export const Kiu: CharacterProfile = {
   skills: [
     { id: "experimental-ammo", name: "Munición Experimental", type: "passive", passiveTrigger: "on_attack", particleColor: 0xff9800, effect: { damageMultiplier: 2 } },
     { id: "idea", name: "¡Tengo una idea!", type: "active", cooldownMs: 10000, flavorText: "¡Tengo una idea!", effect: { damageMultiplier: 3 } },
+    { id: "piercing-bolt", name: "Virote Perforante", type: "active", cooldownMs: 7000, flavorText: "¡Atraviesa todo!", effect: { damageMultiplier: 2, aoeMultiplier: 1 } },
+    { id: "explosive-bolt", name: "Virote Explosivo", type: "active", cooldownMs: 8500, flavorText: "¡Que explote!", effect: { damageMultiplier: 1.5, aoeMultiplier: 2 } },
+    { id: "heavy-bolt", name: "Virote Pesado", type: "active", cooldownMs: 12000, flavorText: "Virote pesado.", effect: { damageMultiplier: 4 } },
+    { id: "control-bolt", name: "Virote de Control", type: "active", cooldownMs: 9000, flavorText: "No te muevas.", effect: { damageMultiplier: 1.25, slowPercent: 0.35 } },
   ],
 };

@@ -26,6 +26,7 @@ export class Tower {
   public gridPos: { x: number; y: number };
   public hp: number;
   public readonly maxHp: number;
+  public isActive = true;
   private readonly healthBar: HealthBar;
 
   constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, profile: CharacterProfile, onClick: (t: Tower) => void) {
@@ -209,7 +210,8 @@ export class Tower {
         const lowAlly = allies.some(tower => tower.hp < tower.maxHp * 0.5);
         const active = skill.passiveTrigger === 'always' ||
           (skill.passiveTrigger === 'ally_nearby' && allies.length >= (this.profile.id === 'gretch' ? 2 : 1)) ||
-          (skill.passiveTrigger === 'low_hp' && (this.hp < this.maxHp * 0.5 || lowAlly));
+          (skill.passiveTrigger === 'low_hp' && (this.hp < this.maxHp * 0.5 || lowAlly)) ||
+          skill.passiveTrigger === 'on_attack';
         const wasActive = this.passiveReady.get(skill.id) ?? false;
         this.passiveReady.set(skill.id, active);
         if (active && !wasActive && skill.particleColor !== undefined) {
@@ -226,7 +228,7 @@ export class Tower {
           }
         }
       } else if (SkillSystem.isReady(this.skillCooldowns, skill.id, time) &&
-        (this.profile.id !== 'gretch' || enemies.some(enemy => enemy.isActive && this.isInRange(enemy)))) {
+        ((!skill.effect.damageMultiplier && !skill.effect.aoeMultiplier) || enemies.some(enemy => enemy.isActive && this.isInRange(enemy)))) {
         this.activateSkill(skill, time, enemies, map, towers);
         SkillSystem.setCooldown(this.skillCooldowns, skill.id, time, skill.cooldownMs ?? 0);
       }
@@ -252,7 +254,7 @@ export class Tower {
   }
 
   private getAllies(towers: Tower[], map: DijkstraMap) {
-    return towers.filter(tower => tower !== this &&
+    return towers.filter(tower => tower !== this && tower.isActive &&
       Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, tower.sprite.x, tower.sprite.y) <= this.profile.baseStats.range &&
       this.hasLineOfSight(this.gridPos.x, this.gridPos.y, tower.gridPos.x, tower.gridPos.y, map));
   }
@@ -282,8 +284,29 @@ export class Tower {
   }
 
   heal(amount: number) {
+    if (!this.isActive) return;
     this.hp = Math.min(this.maxHp, this.hp + amount);
     this.healthBar.update(this.sprite.x, this.sprite.y - 21, this.hp, this.maxHp, 0x22c55e);
+    VisualFX.floatText(this.scene, this.sprite.x, this.sprite.y, `+${amount}`, '#86efac');
+  }
+
+  takeDamage(amount: number) {
+    if (!this.isActive) return;
+    let defenseBoost = 0;
+    for (const skill of this.profile.skills ?? []) {
+      if (skill.type === 'passive' && this.passiveReady.get(skill.id)) defenseBoost += skill.effect.defenseBoost ?? 0;
+      if (skill.type === 'active' && (this.activeEffects.get(skill.id) ?? 0) > this.scene.time.now) defenseBoost += skill.effect.defenseBoost ?? 0;
+    }
+    const reducedDamage = amount * (100 / (100 + this.profile.baseStats.defense * (1 + defenseBoost)));
+    this.hp = Math.max(0, this.hp - reducedDamage);
+    this.healthBar.update(this.sprite.x, this.sprite.y - 21, this.hp, this.maxHp, 0x22c55e);
+    this.sprite.setFillStyle(0xffffff);
+    this.scene.time.delayedCall(100, () => this.isActive && this.sprite.setFillStyle(0x4444ff));
+    VisualFX.floatText(this.scene, this.sprite.x, this.sprite.y, `-${Math.ceil(reducedDamage)}`, '#fca5a5');
+    if (this.hp === 0) {
+      this.isActive = false;
+      this.sprite.setAlpha(0.35);
+    }
   }
 
   getSkillStatuses(time: number) {

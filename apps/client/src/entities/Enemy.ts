@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { SacredGem } from './SacredGem';
 import { EnemyProfile } from '@td-nya/shared';
 import { HealthBar } from './HealthBar';
+import type { Tower } from './Tower';
 
 export class Enemy {
   public sprite: Phaser.GameObjects.Rectangle;
@@ -75,6 +76,12 @@ export class Enemy {
   attackGem(gem: SacredGem, time: number) {
     if (time - this.lastGemAttack < this.profile.attackCooldownMs) return;
     gem.takeDamage(this.attackDamage);
+    this.lastGemAttack = time;
+  }
+
+  attackTower(tower: Tower, time: number) {
+    if (time - this.lastGemAttack < this.profile.attackCooldownMs) return;
+    tower.takeDamage(this.attackDamage);
     this.lastGemAttack = time;
   }
 }

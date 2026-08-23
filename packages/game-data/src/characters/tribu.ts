@@ -19,7 +19,9 @@ export const Tribu: CharacterProfile = {
     moveSpeed: 0,
   },
   skills: [
-    { id: "tactical-adaptation", name: "Adaptación Táctica", type: "passive", passiveTrigger: "always", particleColor: 0x42a5f5, effect: { attackBoost: 0.15 } },
-    { id: "regroup", name: "¡Reagrupación!", type: "active", cooldownMs: 9000, flavorText: "¡Reagrupación!", effect: { speedBoost: 0.5 } },
+    { id: "tactical-adaptation", name: "Adaptación Táctica", type: "passive", passiveTrigger: "always", particleColor: 0x42a5f5, effect: { attackBoost: 0.15, speedBoost: 0.1 } },
+    { id: "chain-of-command", name: "Cadena de Mando", type: "passive", passiveTrigger: "ally_nearby", particleColor: 0x90caf9, effect: { attackBoost: 0.1, defenseBoost: 0.1 } },
+    { id: "regroup", name: "¡Reagrupación!", type: "active", cooldownMs: 9000, flavorText: "¡Reagrupación!", effect: { attackBoost: 0.5, speedBoost: 0.5, rangeBoost: 0.15 } },
+    { id: "absolute-command", name: "COMANDO ABSOLUTO", type: "active", cooldownMs: 20000, flavorText: "Escuchen. Una sola orden.", effect: { attackBoost: 0.75, speedBoost: 0.75, rangeBoost: 0.25 } },
   ],
 };
