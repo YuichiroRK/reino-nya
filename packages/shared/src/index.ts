@@ -70,6 +70,8 @@ export interface SkillEffect {
   damageTakenMultiplier?: number;
   rangeBoost?: number;
   slowPercent?: number;
+  summonCount?: number;
+  transformation?: boolean;
 }
 
 export interface Skill {

@@ -8,6 +8,7 @@ import { SkillSystem } from '../systems/SkillSystem';
 import { TargetingSystem } from '../systems/TargetingSystem';
 import { HealthBar } from './HealthBar';
 import { Projectile } from './Projectile';
+import { MiniMosasaur } from './MiniMosasaur';
 
 export class Tower {
   public profile: CharacterProfile;
@@ -31,6 +32,7 @@ export class Tower {
   public isActive = true;
   public upgradeLevel = 1;
   private readonly healthBar: HealthBar;
+  private summons: MiniMosasaur[] = [];
 
   constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, profile: CharacterProfile, onClick: (t: Tower) => void) {
     this.scene = scene;
@@ -45,8 +47,8 @@ export class Tower {
     this.rangeGraphics = scene.add.graphics();
 
     // Draw tower body (on top of range overlay)
-    this.sprite = profile.id === 'tribu'
-      ? scene.add.image(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, 'tribu-idle').setDisplaySize(tileSize * 0.9, tileSize * 0.9)
+    this.sprite = profile.id === 'tribu' || profile.id === 'angel' || profile.id === 'xavi'
+      ? scene.add.image(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, `${profile.id}-idle`).setDisplaySize(tileSize * 0.9, tileSize * 0.9)
       : scene.add.rectangle(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, tileSize * 0.8, tileSize * 0.8, 0x4444ff);
     this.healthBar.update(this.sprite.x, this.sprite.y - 21, this.hp, this.maxHp, 0x22c55e);
 
@@ -130,6 +132,7 @@ export class Tower {
   }
 
   update(time: number, enemies: Enemy[], map: DijkstraMap, towers: Tower[] = []) {
+    for (const summon of this.summons) summon.update(time, enemies);
     this.updateSkills(time, enemies, map, towers);
     const speedBoost = towers.reduce((boost, tower) => boost + tower.getSpeedBoostFor(this, time), 0);
     const fireCooldownMs = 1000 / (this.profile.baseStats.attackSpeed * this.upgradeLevel * (1 + speedBoost));
@@ -219,6 +222,9 @@ export class Tower {
         if (active && !wasActive && skill.particleColor !== undefined) {
           VisualFX.burstParticles(this.scene, this.sprite.x, this.sprite.y, skill.particleColor);
         }
+        if (active && skill.id === 'abyss-companions' && skill.effect.summonCount) {
+          while (this.summons.length < skill.effect.summonCount) this.summons.push(new MiniMosasaur(this.scene, this.sprite.x, this.sprite.y));
+        }
         if (active && this.profile.id === 'gretch' && skill.effect.aoeMultiplier && this.nextAoeMultiplier === 1) {
           this.nextAoeMultiplier = skill.effect.aoeMultiplier;
         }
@@ -243,6 +249,7 @@ export class Tower {
     VisualFX.ring(this.scene, this.sprite.x, this.sprite.y, skill.particleColor ?? 0xbb86fc, skill.effect.aoeMultiplier ? 70 : 42);
     VisualFX.burstParticles(this.scene, this.sprite.x, this.sprite.y, skill.particleColor ?? 0xbb86fc);
     if (skill.effect.damageMultiplier && this.profile.id !== 'cesar') this.nextDamageMultiplier = skill.effect.damageMultiplier;
+    if (skill.id === 'call-of-abyss') this.summons.push(new MiniMosasaur(this.scene, this.sprite.x, this.sprite.y, true));
     if (skill.effect.healAmount) {
       const allies = this.getAllies(towers, map);
       const targets = this.skillTargetPriority === 'all' ? allies : [this.selectSkillAlly(allies)];
@@ -257,6 +264,20 @@ export class Tower {
       if (target) {
         target.takeDamage(this.profile.baseStats.attack * 4);
         VisualFX.impact(this.scene, target.sprite.x, target.sprite.y, 0xffffff);
+      }
+    }
+    if (skill.id === 'pack-bite') {
+      const target = enemies.filter(enemy => enemy.isActive && this.isInRange(enemy)).sort((a, b) => Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, a.sprite.x, a.sprite.y) - Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, b.sprite.x, b.sprite.y))[0];
+      if (target) {
+        target.takeDamage(this.profile.baseStats.attack * 2);
+        VisualFX.impact(this.scene, target.sprite.x, target.sprite.y, 0x29b6f6);
+      }
+    }
+    if (skill.id === 'wild-current') {
+      for (const enemy of enemies) if (enemy.isActive && this.isInRange(enemy)) {
+        enemy.takeDamage(this.profile.baseStats.attack * 1.5);
+        enemy.speed *= 0.65;
+        VisualFX.impact(this.scene, enemy.sprite.x, enemy.sprite.y, 0x29b6f6);
       }
     }
     if (skill.effect.aoeMultiplier && this.profile.id === 'gretch') {

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { DijkstraMap, Angel, Lucy, Tribu, Kiu, Gretch, Cesar, EnemyData, Levels } from '@td-nya/game-data';
+import { DijkstraMap, Angel, Lucy, Tribu, Kiu, Gretch, Cesar, Xavi, EnemyData, Levels } from '@td-nya/game-data';
 import { Enemy } from './entities/Enemy';
 import { Tower } from './entities/Tower';
 import { SacredGem } from './entities/SacredGem';
@@ -15,6 +15,7 @@ const CHARACTER_MAP: Record<string, CharacterProfile> = {
   kiu: Kiu,
   gretch: Gretch,
   cesar: Cesar,
+  xavi: Xavi,
 };
 
 class MainScene extends Phaser.Scene {
@@ -44,6 +45,7 @@ class MainScene extends Phaser.Scene {
   private selectedEnemy: Enemy | null = null;
   private uiPanel!: HTMLElement;
   private uiTowerName!: HTMLElement;
+  private uiTowerPortrait!: HTMLImageElement;
   private uiTowerRole!: HTMLElement;
   private uiEnemyDetails!: HTMLElement;
   private uiTargetingSelect!: HTMLSelectElement;
@@ -97,6 +99,8 @@ class MainScene extends Phaser.Scene {
 
   preload() {
     this.load.image('tribu-idle', '/assets/characters/IdleTribu.png');
+    this.load.image('angel-idle', '/assets/characters/AngelIdle.png');
+    this.load.image('xavi-idle', '/assets/characters/MosasaurioXaviIdle.png');
   }
 
   create() {
@@ -254,6 +258,7 @@ class MainScene extends Phaser.Scene {
   setupHTMLUI() {
     this.uiPanel = document.getElementById('ui-panel')!;
     this.uiTowerName = document.getElementById('tower-name')!;
+    this.uiTowerPortrait = document.getElementById('tower-portrait') as HTMLImageElement;
     this.uiTowerRole = document.getElementById('tower-role')!;
     this.uiEnemyDetails = document.getElementById('enemy-details')!;
     this.uiTargetingSelect = document.getElementById('targeting-select') as HTMLSelectElement;
@@ -454,7 +459,12 @@ class MainScene extends Phaser.Scene {
     this.selectedEnemy = null;
     this.uiPanel.classList.remove('enemy-selected', 'minimized');
     this.uiMinimizePanel.innerText = '−';
-    this.uiPanel.classList.toggle('has-portrait', tower.profile.id === 'tribu');
+    const hasPortrait = tower.profile.id === 'tribu' || tower.profile.id === 'angel' || tower.profile.id === 'xavi';
+    this.uiPanel.classList.toggle('has-portrait', hasPortrait);
+    if (hasPortrait) {
+      const portrait = tower.profile.id === 'tribu' ? 'IdleTribu' : tower.profile.id === 'angel' ? 'AngelIdle' : 'MosasaurioXaviIdle';
+      this.uiTowerPortrait.src = `/assets/characters/${portrait}.png`;
+    }
     this.uiSkillInfo.classList.remove('visible');
     this.uiTowerName.innerText = tower.profile.name + ' - ' + tower.profile.title;
     this.uiTowerRole.innerText = 'Rol: ' + tower.profile.roles.join(', ') + ' | Daño: ' + tower.profile.baseStats.attack * tower.upgradeLevel + ' | Vida: ' + Math.ceil(tower.hp) + '/' + tower.maxHp + ' | Nv ' + tower.upgradeLevel;
