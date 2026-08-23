@@ -367,8 +367,13 @@
     #game-status .hud-card:not(.coin-card):not(:last-child) { display: none; }
     #game-status .hud-card:last-child { margin-bottom: 0; }
     #test-toolbar { top: auto; right: 14px; bottom: 14px; width: 220px; padding: 12px; border-radius: 15px; }
+    #test-toolbar.minimized { width: auto; padding: 10px 14px; }
+    #test-toolbar.minimized .toolbar-content { display: none; }
+    .hud-minimize { float: right; padding: 2px 6px; border: 1px solid var(--ui-border); border-radius: 5px; background: var(--ui-card); color: var(--ui-text); cursor: pointer; }
     #ui-panel { top: auto; right: auto; left: 14px; bottom: 14px; width: 250px; }
     #ui-panel.active { top: auto; right: auto; left: 14px; bottom: 14px; }
+    #ui-panel.minimized { width: auto; padding: 10px 14px; }
+    #ui-panel.minimized > :not(#tower-name):not(#close-panel):not(#minimize-panel) { display: none; }
     #wave-banner, #gem-banner { position: absolute; z-index: 10; border: 1px solid var(--ui-border); border-radius: 12px; background: var(--ui-surface); box-shadow: 0 10px 30px rgba(0,0,0,0.3); color: var(--ui-text); text-align: center; }
     #wave-banner { top: 14px; left: 50%; width: 300px; padding: 9px 18px; transform: translateX(-50%); }
     #wave-banner strong { display: block; font-size: 1rem; letter-spacing: 0.04em; }
@@ -421,8 +426,10 @@
   </div>
   
   <div id="test-toolbar">
-    <button class="tool-btn active" data-tool="tower">🗼 Torre</button>
-    <div id="char-select-wrapper" class="visible">
+    <button class="hud-minimize" id="minimize-toolbar">−</button>
+    <div class="toolbar-content">
+      <button class="tool-btn active" data-tool="tower">🗼 Torre</button>
+      <div id="char-select-wrapper" class="visible">
       <label class="config-label" for="level-select">Nivel</label>
       <select id="level-select">
         <option value="level1">Nivel 1 · Primer asedio</option>
@@ -457,11 +464,13 @@
         <option value="15000" selected>15 segundos</option>
         <option value="20000">20 segundos</option>
       </select>
+      </div>
     </div>
   </div>
 
   <div id="ui-panel">
     <button id="close-panel">✕</button>
+    <button class="hud-minimize" id="minimize-panel">−</button>
     <img id="tower-portrait" src="/assets/characters/IdleTribu.png" alt="Retrato de Tribu">
     <h2 id="tower-name">Nombre Torre</h2>
     <p style="font-size: 0.85rem; color: #aaa;" id="tower-role">Rol / Stats</p>
@@ -492,7 +501,7 @@
       <div id="skill-status">Selecciona una torre</div>
       <div id="skill-info"></div>
     </div>
-    <div class="form-group">
+    <div class="form-group tower-only">
       <label>Mejora dentro de partida</label>
       <p id="upgrade-info">Nivel 1 · 100 monedas</p>
       <button id="upgrade-tower">Mejorar torre</button>

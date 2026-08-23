@@ -71,6 +71,8 @@ class MainScene extends Phaser.Scene {
   private uiCoins!: HTMLElement;
   private uiSkills!: HTMLElement;
   private uiSkillInfo!: HTMLElement;
+  private uiMinimizeToolbar!: HTMLButtonElement;
+  private uiMinimizePanel!: HTMLButtonElement;
   private dragState: { offsetX: number; offsetY: number } | null = null;
   private uiSkillModal!: HTMLElement;
   private uiSkillDetailTitle!: HTMLElement;
@@ -280,6 +282,8 @@ class MainScene extends Phaser.Scene {
     this.uiCoins = document.getElementById('coin-status')!;
     this.uiSkills = document.getElementById('skill-status')!;
     this.uiSkillInfo = document.getElementById('skill-info')!;
+    this.uiMinimizeToolbar = document.getElementById('minimize-toolbar') as HTMLButtonElement;
+    this.uiMinimizePanel = document.getElementById('minimize-panel') as HTMLButtonElement;
     if (localStorage.getItem('td-nya-theme') === 'light') document.body.classList.add('light-theme');
     this.updateThemeButton();
     this.uiSkillModal = document.getElementById('skill-detail-modal')!;
@@ -300,7 +304,7 @@ class MainScene extends Phaser.Scene {
     this.uiGemBannerProgress = document.getElementById('gem-banner-progress')!;
     this.uiSkillModal.classList.remove('visible');
 
-    this.uiCloseBtn.addEventListener('click', () => this.closeUIPanel());
+    this.uiCloseBtn.onclick = () => this.closeUIPanel();
     this.uiRemoveBtn.addEventListener('click', () => this.removeSelectedTower());
     this.uiWaveButton.addEventListener('click', () => {
       if (this.isPaused) {
@@ -335,6 +339,14 @@ class MainScene extends Phaser.Scene {
       const collapsed = this.uiHud.classList.toggle('collapsed');
       this.uiHudToggle.innerText = collapsed ? 'Mostrar' : 'Ocultar';
     });
+    this.uiMinimizeToolbar.onclick = () => {
+      const minimized = document.getElementById('test-toolbar')!.classList.toggle('minimized');
+      this.uiMinimizeToolbar.innerText = minimized ? '+' : '−';
+    };
+    this.uiMinimizePanel.onclick = () => {
+      const minimized = this.uiPanel.classList.toggle('minimized');
+      this.uiMinimizePanel.innerText = minimized ? '+' : '−';
+    };
     this.uiSkills.addEventListener('click', event => {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-skill-id]');
       const skill = this.selectedTower?.profile.skills?.find(item => item.id === button?.dataset.skillId);
@@ -440,7 +452,8 @@ class MainScene extends Phaser.Scene {
   openUIPanel(tower: Tower) {
     this.selectedTower = tower;
     this.selectedEnemy = null;
-    this.uiPanel.classList.remove('enemy-selected');
+    this.uiPanel.classList.remove('enemy-selected', 'minimized');
+    this.uiMinimizePanel.innerText = '−';
     this.uiPanel.classList.toggle('has-portrait', tower.profile.id === 'tribu');
     this.uiSkillInfo.classList.remove('visible');
     this.uiTowerName.innerText = tower.profile.name + ' - ' + tower.profile.title;
@@ -459,6 +472,8 @@ class MainScene extends Phaser.Scene {
     this.selectedEnemy = enemy;
     this.selectedTower = null;
     this.uiPanel.classList.add('active', 'enemy-selected');
+    this.uiPanel.classList.remove('minimized');
+    this.uiMinimizePanel.innerText = '−';
     this.uiPanel.classList.remove('has-portrait');
     this.uiTowerName.innerText = enemy.profile.name;
     this.uiTowerRole.innerText = `Enemigo ${enemy.profile.type} · ${enemy.profile.movement === 'flying' ? 'Volador' : 'Terrestre'}`;
@@ -543,7 +558,7 @@ class MainScene extends Phaser.Scene {
   closeUIPanel() {
     this.selectedTower = null;
     this.selectedEnemy = null;
-    this.uiPanel.classList.remove('enemy-selected');
+    this.uiPanel.classList.remove('enemy-selected', 'minimized');
     this.uiPanel.classList.remove('active');
   }
 
