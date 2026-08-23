@@ -32,6 +32,7 @@ export class Tower {
   public isActive = true;
   public upgradeLevel = 1;
   public globalLevel = 1;
+  public upgradePaths = { attack: 0, speed: 0, range: 0 };
   public isTransformed = false;
   private readonly healthBar: HealthBar;
   private summons: MiniMosasaur[] = [];
@@ -74,7 +75,7 @@ export class Tower {
 
     const cx = this.gridPos.x * this.tileSize + this.tileSize / 2;
     const cy = this.gridPos.y * this.tileSize + this.tileSize / 2;
-    const maxRange = this.profile.baseStats.range;
+    const maxRange = this.effectiveRange;
     const RAY_COUNT = 120; // smoothness
 
     const points: { x: number; y: number }[] = [];
@@ -138,13 +139,13 @@ export class Tower {
     for (const summon of this.summons) summon.update(time, enemies);
     this.updateSkills(time, enemies, map, towers);
     const speedBoost = towers.reduce((boost, tower) => boost + tower.getSpeedBoostFor(this, time), 0);
-    const fireCooldownMs = 1000 / (this.profile.baseStats.attackSpeed * this.upgradeLevel * (1 + speedBoost));
+    const fireCooldownMs = 1000 / (this.profile.baseStats.attackSpeed * this.upgradeLevel * (1 + speedBoost) * (1 + this.upgradePaths.speed * 0.12));
     if (time - this.lastFiredTime < fireCooldownMs) return;
 
     const inRange = enemies.filter(e => {
       if (!e.isActive) return false;
       const dist = Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, e.sprite.x, e.sprite.y);
-      if (dist > this.profile.baseStats.range) return false;
+      if (dist > this.effectiveRange) return false;
       return this.hasLineOfSight(this.gridPos.x, this.gridPos.y, e.gridPos.x, e.gridPos.y, map);
     });
 
@@ -203,7 +204,7 @@ export class Tower {
 
     const attackBoost = towers.reduce((boost, tower) => boost + tower.getAttackBoostFor(this, towers, map), 0);
     const globalMultiplier = 1 + (this.globalLevel - 1) * 0.03;
-    const damage = CombatSystem.calculateDamage(this.profile.baseStats.attack * this.upgradeLevel * globalMultiplier, attackBoost, damageMultiplier);
+    const damage = CombatSystem.calculateDamage(this.profile.baseStats.attack * this.upgradeLevel * globalMultiplier * (1 + this.upgradePaths.attack * 0.2), attackBoost, damageMultiplier);
     target.takeDamage(damage);
     if (aoeMultiplier > 1) {
       for (const enemy of enemies) {
@@ -311,7 +312,7 @@ export class Tower {
 
   private getAllies(towers: Tower[], map: DijkstraMap) {
     return towers.filter(tower => tower !== this && tower.isActive &&
-      Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, tower.sprite.x, tower.sprite.y) <= this.profile.baseStats.range &&
+      Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, tower.sprite.x, tower.sprite.y) <= this.effectiveRange &&
       this.hasLineOfSight(this.gridPos.x, this.gridPos.y, tower.gridPos.x, tower.gridPos.y, map));
   }
 
@@ -322,7 +323,7 @@ export class Tower {
   }
 
   private isInRange(enemy: Enemy) {
-    return Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, enemy.sprite.x, enemy.sprite.y) <= this.profile.baseStats.range;
+    return Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, enemy.sprite.x, enemy.sprite.y) <= this.effectiveRange;
   }
 
   getAttackBoostFor(target: Tower, towers: Tower[], map: DijkstraMap) {
@@ -339,7 +340,7 @@ export class Tower {
   getSpeedBoostFor(target: Tower, time: number) {
     let boost = 0;
     for (const skill of this.profile.skills ?? []) {
-      const inRange = Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, target.sprite.x, target.sprite.y) <= this.profile.baseStats.range;
+      const inRange = Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, target.sprite.x, target.sprite.y) <= this.effectiveRange;
       if (skill.type === 'active' && inRange && (this.activeEffects.get(skill.id) ?? 0) > time) boost += skill.effect.speedBoost ?? 0;
     }
     return boost;
@@ -361,7 +362,7 @@ export class Tower {
     }
     for (const source of towers) {
       if (source === this || !source.isActive) continue;
-      const inRange = Phaser.Math.Distance.Between(source.sprite.x, source.sprite.y, this.sprite.x, this.sprite.y) <= source.profile.baseStats.range;
+      const inRange = Phaser.Math.Distance.Between(source.sprite.x, source.sprite.y, this.sprite.x, this.sprite.y) <= source.effectiveRange;
       if (!inRange) continue;
       for (const skill of source.profile.skills ?? []) {
         if (skill.type === 'active' && (source.activeEffects.get(skill.id) ?? 0) > this.scene.time.now) defenseBoost += (1 - (skill.effect.damageTakenMultiplier ?? 1));
@@ -394,6 +395,15 @@ export class Tower {
   }
 
   get upgradeCost() { return 100 * this.upgradeLevel; }
+  get effectiveRange() { return this.profile.baseStats.range + this.upgradePaths.range * 25; }
+
+  getPathCost(path: keyof typeof this.upgradePaths) { return 80 + this.upgradePaths[path] * 80; }
+
+  upgradePath(path: keyof typeof this.upgradePaths) {
+    if (this.upgradePaths[path] >= 3) return false;
+    this.upgradePaths[path]++;
+    return true;
+  }
 
   upgrade() {
     if (this.upgradeLevel >= 4) return false;

@@ -68,6 +68,11 @@ class MainScene extends Phaser.Scene {
   private uiEndTitle!: HTMLElement;
   private uiEndMessage!: HTMLElement;
   private uiRestartButton!: HTMLButtonElement;
+  private uiPrepScreen!: HTMLElement;
+  private uiStartGameButton!: HTMLButtonElement;
+  private uiCollectionScreen!: HTMLElement;
+  private uiCollectionList!: HTMLElement;
+  private uiUpgradePaths!: Record<'attack' | 'speed' | 'range', HTMLButtonElement>;
   private uiHud!: HTMLElement;
   private uiHudToggle!: HTMLButtonElement;
   private uiWaveButton!: HTMLButtonElement;
@@ -287,12 +292,23 @@ class MainScene extends Phaser.Scene {
     this.uiEndTitle = document.getElementById('end-title')!;
     this.uiEndMessage = document.getElementById('end-message')!;
     this.uiRestartButton = document.getElementById('restart-button') as HTMLButtonElement;
+    this.uiPrepScreen = document.getElementById('prep-screen')!;
+    this.uiStartGameButton = document.getElementById('start-game-button') as HTMLButtonElement;
+    this.uiCollectionScreen = document.getElementById('collection-screen')!;
+    this.uiCollectionList = document.getElementById('collection-list')!;
+    this.uiUpgradePaths = {
+      attack: document.getElementById('upgrade-attack') as HTMLButtonElement,
+      speed: document.getElementById('upgrade-speed') as HTMLButtonElement,
+      range: document.getElementById('upgrade-range') as HTMLButtonElement,
+    };
     this.uiEndScreen.classList.remove('visible');
     this.uiHud = document.getElementById('game-status')!;
     this.uiHudToggle = document.getElementById('hud-toggle') as HTMLButtonElement;
     this.uiWaveButton = document.getElementById('wave-button') as HTMLButtonElement;
     this.uiThemeButton = document.getElementById('theme-toggle') as HTMLButtonElement;
     this.uiWaveButton.disabled = false;
+    this.uiWaveButton.disabled = true;
+    this.uiPrepScreen.classList.remove('hidden');
     this.uiCoins = document.getElementById('coin-status')!;
     this.uiSkills = document.getElementById('skill-status')!;
     this.uiSkillInfo = document.getElementById('skill-info')!;
@@ -332,6 +348,16 @@ class MainScene extends Phaser.Scene {
       this.uiGameState.innerText = this.isPaused ? 'PAUSADO' : 'EN JUEGO';
       this.uiGameState.style.color = this.isPaused ? '#fcd34d' : '#a7f3d0';
     });
+    this.uiStartGameButton.onclick = () => {
+      this.waveSystem.start(this.time.now);
+      this.uiPrepScreen.classList.add('hidden');
+      this.uiWaveButton.disabled = false;
+    };
+    (document.getElementById('collection-button') as HTMLButtonElement).onclick = () => {
+      this.updateCollectionUI();
+      this.uiCollectionScreen.classList.add('visible');
+    };
+    (document.getElementById('close-collection') as HTMLButtonElement).onclick = () => this.uiCollectionScreen.classList.remove('visible');
     this.uiThemeButton.addEventListener('click', () => {
       document.body.classList.toggle('light-theme');
       localStorage.setItem('td-nya-theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
@@ -394,6 +420,9 @@ class MainScene extends Phaser.Scene {
       if (this.selectedTower) this.selectedTower.skillTargetPriority = this.uiSkillTarget.value as SkillTargetPriority;
     });
     this.uiUpgradeButton.addEventListener('click', () => this.upgradeSelectedTower());
+    (Object.keys(this.uiUpgradePaths) as Array<keyof typeof this.uiUpgradePaths>).forEach(path => {
+      this.uiUpgradePaths[path].onclick = () => this.upgradeSelectedPath(path);
+    });
     this.updateTowerLimit();
     this.updateEconomyUI();
 
@@ -532,6 +561,21 @@ class MainScene extends Phaser.Scene {
   private updateUpgradeUI(tower: Tower) {
     this.uiUpgradeInfo.innerText = tower.upgradeLevel >= 4 ? 'Nivel máximo' : `Nivel ${tower.upgradeLevel} · ${tower.upgradeCost} Aura Points`;
     this.uiUpgradeButton.disabled = tower.upgradeLevel >= 4 || this.auraPoints < tower.upgradeCost;
+    (Object.keys(this.uiUpgradePaths) as Array<keyof typeof this.uiUpgradePaths>).forEach(path => {
+      const level = tower.upgradePaths[path];
+      this.uiUpgradePaths[path].innerText = `${path === 'attack' ? 'Daño' : path === 'speed' ? 'Velocidad' : 'Rango'} ${level}/3`;
+      this.uiUpgradePaths[path].disabled = level >= 3 || this.auraPoints < tower.getPathCost(path);
+    });
+  }
+
+  private upgradeSelectedPath(path: 'attack' | 'speed' | 'range') {
+    if (!this.selectedTower) return;
+    const cost = this.selectedTower.getPathCost(path);
+    if (this.auraPoints < cost || !this.selectedTower.upgradePath(path)) return;
+    this.auraPoints -= cost;
+    this.selectedTower.drawRange(this.map);
+    this.updateUpgradeUI(this.selectedTower);
+    VisualFX.floatText(this, this.selectedTower.sprite.x, this.selectedTower.sprite.y, `${path.toUpperCase()} +1`, '#facc15');
   }
 
   private upgradeSelectedTower() {
@@ -635,6 +679,13 @@ class MainScene extends Phaser.Scene {
       const cost = card.querySelector('.roster-cost');
       if (profile && cost) cost.innerText = `${this.getTowerCost(profile)} AP · Nv ${this.characterProgression.get(profile.id).level}`;
     });
+  }
+
+  private updateCollectionUI() {
+    this.uiCollectionList.innerHTML = Object.entries(CHARACTER_MAP).map(([id, profile]) => {
+      const progress = this.characterProgression.get(id);
+      return `<div class="collection-entry"><strong>${profile.name}</strong><br>Nivel ${progress.level}<br>${progress.experience} XP</div>`;
+    }).join('');
   }
 
   private updateTowerLimit() {

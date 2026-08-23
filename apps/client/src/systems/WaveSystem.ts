@@ -6,13 +6,19 @@ export class WaveSystem {
   private nextWaveAt = 12000;
   private waveDelay = 15000;
   private waves: WaveDefinition[] = [];
+  private pending: { enemyId: string; remaining: number; intervalMs: number; nextSpawnAt: number }[] = [];
+  public started = false;
 
   setLevel(waves: WaveDefinition[]) {
     this.waves = waves;
   }
-  private pending: { enemyId: string; remaining: number; intervalMs: number; nextSpawnAt: number }[] = [];
+  start(time: number) {
+    this.started = true;
+    this.nextWaveAt = time;
+  }
 
   update(time: number, activeEnemies: number, waves: WaveDefinition[], spawn: (enemyId: string) => void) {
+    if (!this.started) return false;
     if (this.pending.length > 0) {
       const entry = this.pending[0];
       if (time >= entry.nextSpawnAt) {

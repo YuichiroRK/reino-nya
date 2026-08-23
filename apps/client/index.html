@@ -233,6 +233,10 @@
     #upgrade-tower:hover:not(:disabled) { background: rgba(250, 204, 21, 0.28); }
     #upgrade-tower:disabled { cursor: not-allowed; opacity: 0.45; }
     #upgrade-info { margin: 0 0 8px; color: #fcd34d; font-size: 0.75rem; }
+    .upgrade-paths { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+    .upgrade-paths button { padding: 7px 3px; border: 1px solid var(--ui-border); border-radius: 6px; background: var(--ui-card); color: var(--ui-text); cursor: pointer; font-size: 0.68rem; }
+    .upgrade-paths button:hover:not(:disabled) { border-color: var(--primary-color); }
+    .upgrade-paths button:disabled { cursor: not-allowed; opacity: 0.45; }
 
     #tower-limit {
       margin: 0;
@@ -337,6 +341,20 @@
 
     #end-screen { position: fixed; inset: 0; z-index: 30; display: none; place-items: center; background: rgba(5, 5, 8, 0.78); backdrop-filter: blur(8px); }
     #end-screen.visible { display: grid; }
+    #prep-screen { position: fixed; inset: 0; z-index: 35; display: grid; place-items: center; background: rgba(10, 7, 18, 0.58); backdrop-filter: blur(4px); }
+    #prep-screen.hidden { display: none; }
+    .prep-card { width: min(430px, calc(100vw - 32px)); padding: 28px; border: 1px solid rgba(249, 168, 212, 0.45); border-radius: 20px; background: var(--ui-modal); color: var(--ui-modal-text); text-align: center; box-shadow: 0 20px 70px rgba(0,0,0,0.5); }
+    .prep-card h1 { margin: 0 0 8px; color: var(--primary-color); font-size: 1.8rem; }
+    .prep-card p { margin: 0 0 20px; color: var(--ui-muted); line-height: 1.5; }
+    #start-game-button { padding: 12px 26px; border: 0; border-radius: 9px; background: linear-gradient(90deg, var(--primary-color), var(--pink-color)); color: #24132f; cursor: pointer; font-weight: 900; }
+    #collection-button { width: 100%; margin-top: 6px; padding: 7px; border: 1px solid var(--ui-border); border-radius: 6px; background: var(--ui-card); color: var(--ui-text); cursor: pointer; font-size: 0.72rem; }
+    #collection-screen { position: fixed; inset: 0; z-index: 36; display: none; place-items: center; padding: 20px; background: rgba(10, 7, 18, 0.7); backdrop-filter: blur(5px); }
+    #collection-screen.visible { display: grid; }
+    .collection-card { width: min(520px, calc(100vw - 32px)); padding: 24px; border: 1px solid rgba(192,132,252,0.35); border-radius: 18px; background: var(--ui-modal); color: var(--ui-modal-text); }
+    .collection-card h2 { margin-top: 0; color: var(--primary-color); }
+    #collection-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+    .collection-entry { padding: 9px; border-radius: 7px; background: var(--ui-card); color: var(--ui-modal-text); font-size: 0.78rem; }
+    #close-collection { float: right; border: 0; background: transparent; color: var(--ui-modal-text); cursor: pointer; font-size: 1.2rem; }
     .end-card { width: min(390px, calc(100vw - 32px)); padding: 32px 24px; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 18px; background: #1b1b23; text-align: center; box-shadow: 0 18px 60px rgba(0, 0, 0, 0.5); }
     #end-title { margin: 0 0 8px; color: #f4f4f5; font-size: 2rem; }
     #end-message { margin: 0 0 22px; color: #a1a1aa; }
@@ -419,6 +437,7 @@
       <div class="hud-card wide"><span class="hud-card-label">Progresión global</span><span class="hud-value" id="profile-status">Perfil Nv 1 · 0/100 XP</span></div>
     </div>
     <button id="wave-button">Pausar</button>
+    <button id="collection-button">Colección y progreso</button>
   </div>
   <div id="roster">
     <button class="roster-card" data-character="angel"><img src="/assets/characters/AngelIdle.png" alt="Angel"><b>Angel</b><small>SSR · BUFFER</small><span class="roster-cost">250 N</span><span class="roster-bar"></span></button>
@@ -512,6 +531,7 @@
       <label>Mejora dentro de partida</label>
       <p id="upgrade-info">Nivel 1 · 100 Aura Points</p>
       <button id="upgrade-tower">Mejorar torre</button>
+      <div class="upgrade-paths"><button id="upgrade-attack">Daño</button><button id="upgrade-speed">Velocidad</button><button id="upgrade-range">Rango</button></div>
     </div>
     <button class="tower-only" id="remove-tower">Quitar torre</button>
   </div>
@@ -533,6 +553,16 @@
       <p id="end-message"></p>
       <button id="restart-button">Reiniciar partida</button>
     </div>
+  </div>
+  <div id="prep-screen">
+    <div class="prep-card">
+      <h1>Nivel 1: Primer Asedio</h1>
+      <p>Prepara tu escuadrón y protege las tres Joyas del Nya durante 5 oleadas.</p>
+      <button id="start-game-button">Comenzar defensa</button>
+    </div>
+  </div>
+  <div id="collection-screen">
+    <div class="collection-card"><button id="close-collection">×</button><h2>Colección del Nya</h2><div id="collection-list"></div></div>
   </div>
   <script type="module" src="/src/main.ts"></script>
 </body>
