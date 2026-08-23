@@ -61,6 +61,7 @@ class MainScene extends Phaser.Scene {
   private uiWaveButton!: HTMLButtonElement;
   private uiCoins!: HTMLElement;
   private uiSkills!: HTMLElement;
+  private uiSkillInfo!: HTMLElement;
 
   constructor() {
     super({ key: 'MainScene' });
@@ -211,6 +212,7 @@ class MainScene extends Phaser.Scene {
     this.uiWaveButton = document.getElementById('wave-button') as HTMLButtonElement;
     this.uiCoins = document.getElementById('coin-status')!;
     this.uiSkills = document.getElementById('skill-status')!;
+    this.uiSkillInfo = document.getElementById('skill-info')!;
 
     this.uiCloseBtn.addEventListener('click', () => this.closeUIPanel());
     this.uiRemoveBtn.addEventListener('click', () => this.removeSelectedTower());
@@ -236,6 +238,14 @@ class MainScene extends Phaser.Scene {
     this.uiHudToggle.addEventListener('click', () => {
       const collapsed = this.uiHud.classList.toggle('collapsed');
       this.uiHudToggle.innerText = collapsed ? 'Mostrar' : 'Ocultar';
+    });
+    this.uiSkills.addEventListener('click', event => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-skill-id]');
+      const skill = this.selectedTower?.profile.skills?.find(item => item.id === button?.dataset.skillId);
+      if (skill) {
+        this.uiSkillInfo.innerHTML = `<strong>${skill.name}</strong>${skill.description ?? this.describeSkill(skill)}`;
+        this.uiSkillInfo.classList.add('visible');
+      }
     });
     this.updateTowerLimit();
     this.updateEconomyUI();
@@ -293,6 +303,7 @@ class MainScene extends Phaser.Scene {
 
   openUIPanel(tower: Tower) {
     this.selectedTower = tower;
+    this.uiSkillInfo.classList.remove('visible');
     this.uiTowerName.innerText = tower.profile.name + ' - ' + tower.profile.title;
     this.uiTowerRole.innerText = 'Rol: ' + tower.profile.roles.join(', ') + ' | Daño: ' + tower.profile.baseStats.attack + ' | Vida: ' + tower.hp + '/' + tower.maxHp;
     
@@ -305,11 +316,25 @@ class MainScene extends Phaser.Scene {
 
   private updateSkillUI(tower: Tower) {
     this.uiSkills.innerHTML = tower.getSkillStatuses(this.time.now).map(skill => {
-      if (skill.type === 'passive') return `<div class="skill-card passive"><span>${skill.name}</span><span class="skill-state">PASIVA</span></div>`;
+      if (skill.type === 'passive') return `<button class="skill-card passive" data-skill-id="${skill.id}"><span>${skill.name}</span><span class="skill-state">PASIVA</span></button>`;
       const status = skill.remainingMs > 0 ? `${(skill.remainingMs / 1000).toFixed(1)}s` : 'Lista';
       const stateClass = skill.remainingMs > 0 ? 'cooldown' : 'ready';
-      return `<div class="skill-card ${stateClass}"><span>${skill.name}</span><span class="skill-state">${skill.active ? 'ACTIVA' : status}</span></div>`;
+      return `<button class="skill-card ${stateClass}" data-skill-id="${skill.id}"><span>${skill.name}</span><span class="skill-state">${skill.active ? 'ACTIVA' : status}</span></button>`;
     }).join('');
+  }
+
+  private describeSkill(skill: NonNullable<CharacterProfile['skills']>[number]) {
+    const effect = skill.effect;
+    const details: string[] = [];
+    if (effect.attackBoost) details.push(`+${Math.round(effect.attackBoost * 100)}% de ataque`);
+    if (effect.speedBoost) details.push(`+${Math.round(effect.speedBoost * 100)}% de velocidad de ataque`);
+    if (effect.defenseBoost) details.push(`+${Math.round(effect.defenseBoost * 100)}% de defensa`);
+    if (effect.damageMultiplier) details.push(`multiplicador de daño x${effect.damageMultiplier}`);
+    if (effect.healAmount) details.push(`cura ${effect.healAmount} HP`);
+    if (effect.aoeMultiplier) details.push('daño en área');
+    if (effect.rangeBoost) details.push(`+${Math.round(effect.rangeBoost * 100)}% de alcance`);
+    if (effect.slowPercent) details.push(`ralentiza ${Math.round(effect.slowPercent * 100)}%`);
+    return details.length ? details.join(' · ') : 'Efecto especial de combate.';
   }
 
   closeUIPanel() {

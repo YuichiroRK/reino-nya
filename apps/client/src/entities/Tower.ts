@@ -238,18 +238,29 @@ export class Tower {
   private activateSkill(skill: NonNullable<CharacterProfile['skills']>[number], time: number, enemies: Enemy[], map: DijkstraMap, towers: Tower[]) {
     this.activeEffects.set(skill.id, time + 3000);
     if (skill.flavorText) VisualFX.floatText(this.scene, this.sprite.x, this.sprite.y, skill.flavorText, '#ffe082');
+    VisualFX.ring(this.scene, this.sprite.x, this.sprite.y, skill.particleColor ?? 0xbb86fc, skill.effect.aoeMultiplier ? 70 : 42);
+    VisualFX.burstParticles(this.scene, this.sprite.x, this.sprite.y, skill.particleColor ?? 0xbb86fc);
     if (skill.effect.damageMultiplier && this.profile.id !== 'cesar') this.nextDamageMultiplier = skill.effect.damageMultiplier;
     if (skill.effect.healAmount) {
       const target = this.getAllies(towers, map).sort((a, b) => a.hp - b.hp)[0];
-      target?.heal(skill.effect.healAmount);
+      if (target) {
+        target.heal(skill.effect.healAmount);
+        VisualFX.ring(this.scene, target.sprite.x, target.sprite.y, 0x66bb6a, 30);
+      }
     }
     if (skill.effect.damageMultiplier === 4) {
       const target = enemies.filter(enemy => enemy.isActive && this.isInRange(enemy))
         .sort((a, b) => Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, a.sprite.x, a.sprite.y) - Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, b.sprite.x, b.sprite.y))[0];
-      target?.takeDamage(this.profile.baseStats.attack * 4);
+      if (target) {
+        target.takeDamage(this.profile.baseStats.attack * 4);
+        VisualFX.impact(this.scene, target.sprite.x, target.sprite.y, 0xffffff);
+      }
     }
     if (skill.effect.aoeMultiplier && this.profile.id === 'gretch') {
-      for (const enemy of enemies) if (enemy.isActive && this.isInRange(enemy)) enemy.takeDamage(this.profile.baseStats.attack * 2);
+      for (const enemy of enemies) if (enemy.isActive && this.isInRange(enemy)) {
+        enemy.takeDamage(this.profile.baseStats.attack * 2);
+        VisualFX.impact(this.scene, enemy.sprite.x, enemy.sprite.y, skill.particleColor ?? 0xec407a);
+      }
     }
   }
 
@@ -312,7 +323,10 @@ export class Tower {
   getSkillStatuses(time: number) {
     return (this.profile.skills ?? []).map(skill => ({
       name: skill.name,
+      id: skill.id,
       type: skill.type,
+      description: skill.description,
+      effect: skill.effect,
       remainingMs: skill.type === 'active' ? Math.max(0, (this.skillCooldowns.get(skill.id) ?? 0) - time) : 0,
       active: skill.type === 'active' && (this.activeEffects.get(skill.id) ?? 0) > time,
     }));

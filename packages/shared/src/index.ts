@@ -80,6 +80,7 @@ export interface Skill {
   cooldownMs?: number;
   particleColor?: number;
   flavorText?: string;
+  description?: string;
   effect: SkillEffect;
 }
 
