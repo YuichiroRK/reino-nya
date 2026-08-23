@@ -50,7 +50,7 @@ export class Tower {
     // Draw tower body (on top of range overlay)
     const spriteKey = profile.id === 'xavi' ? 'xavi-human-idle' : `${profile.id}-idle`;
     this.sprite = ['tribu', 'angel', 'xavi', 'gretch', 'kiu', 'lucy', 'cesar'].includes(profile.id)
-      ? scene.add.image(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, spriteKey).setDisplaySize(tileSize * 0.9, tileSize * 0.9)
+      ? scene.add.image(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, spriteKey).setDisplaySize(tileSize * (profile.id === 'angel' ? 1.1 : 0.9), tileSize * (profile.id === 'angel' ? 1.1 : 0.9))
       : scene.add.rectangle(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, tileSize * 0.8, tileSize * 0.8, 0x4444ff);
     this.healthBar.update(this.sprite.x, this.sprite.y - 21, this.hp, this.maxHp, 0x22c55e);
 
