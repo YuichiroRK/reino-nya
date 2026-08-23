@@ -98,9 +98,11 @@ class MainScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('tribu-idle', '/assets/characters/IdleTribu.png');
-    this.load.image('angel-idle', '/assets/characters/AngelIdle.png');
-    this.load.image('xavi-idle', '/assets/characters/MosasaurioXaviIdle.png');
+    for (const [key, file] of Object.entries({
+      angel: 'AngelIdle.png', tribu: 'IdleTribu.png', gretch: 'GretchIdle.png', kiu: 'KiuIdle.png', lucy: 'LucyIdle.png', cesar: 'CesarIdle.png',
+    })) this.load.image(`${key}-idle`, `/assets/characters/${file}`);
+    this.load.image('xavi-human-idle', '/assets/characters/HumanXaviIdle.png');
+    this.load.image('xavi-mosasaur-idle', '/assets/characters/MosasaurioXaviIdle.png');
   }
 
   create() {
@@ -247,7 +249,10 @@ class MainScene extends Phaser.Scene {
     }
     this.updateGameStatus();
     this.updateEconomyUI();
-    if (this.selectedTower) this.updateSkillUI(this.selectedTower);
+    if (this.selectedTower) {
+      this.updateSkillUI(this.selectedTower);
+      if (this.selectedTower.profile.id === 'xavi') this.uiTowerPortrait.src = `/assets/characters/${this.selectedTower.isTransformed ? 'MosasaurioXaviIdle' : 'HumanXaviIdle'}.png`;
+    }
     if (this.selectedEnemy?.isActive) {
       this.uiEnemyDetails.innerHTML = `<strong>Estado de amenaza</strong>Vida: ${Math.ceil(this.selectedEnemy.hp)}/${this.selectedEnemy.maxHp}<br>Daño: ${Math.ceil(this.selectedEnemy.attackDamage)}<br>Velocidad: ${this.selectedEnemy.speed}<br>Recompensa: ${this.selectedEnemy.profile.reward} monedas`;
     }
@@ -462,7 +467,7 @@ class MainScene extends Phaser.Scene {
     const hasPortrait = tower.profile.id === 'tribu' || tower.profile.id === 'angel' || tower.profile.id === 'xavi';
     this.uiPanel.classList.toggle('has-portrait', hasPortrait);
     if (hasPortrait) {
-      const portrait = tower.profile.id === 'tribu' ? 'IdleTribu' : tower.profile.id === 'angel' ? 'AngelIdle' : 'MosasaurioXaviIdle';
+      const portrait = tower.profile.id === 'tribu' ? 'IdleTribu' : tower.profile.id === 'angel' ? 'AngelIdle' : tower.profile.id === 'xavi' ? 'HumanXaviIdle' : 'HumanXaviIdle';
       this.uiTowerPortrait.src = `/assets/characters/${portrait}.png`;
     }
     this.uiSkillInfo.classList.remove('visible');

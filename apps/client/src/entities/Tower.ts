@@ -31,6 +31,7 @@ export class Tower {
   public maxHp: number;
   public isActive = true;
   public upgradeLevel = 1;
+  public isTransformed = false;
   private readonly healthBar: HealthBar;
   private summons: MiniMosasaur[] = [];
 
@@ -47,8 +48,9 @@ export class Tower {
     this.rangeGraphics = scene.add.graphics();
 
     // Draw tower body (on top of range overlay)
-    this.sprite = profile.id === 'tribu' || profile.id === 'angel' || profile.id === 'xavi'
-      ? scene.add.image(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, `${profile.id}-idle`).setDisplaySize(tileSize * 0.9, tileSize * 0.9)
+    const spriteKey = profile.id === 'xavi' ? 'xavi-human-idle' : `${profile.id}-idle`;
+    this.sprite = ['tribu', 'angel', 'xavi', 'gretch', 'kiu', 'lucy', 'cesar'].includes(profile.id)
+      ? scene.add.image(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, spriteKey).setDisplaySize(tileSize * 0.9, tileSize * 0.9)
       : scene.add.rectangle(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, tileSize * 0.8, tileSize * 0.8, 0x4444ff);
     this.healthBar.update(this.sprite.x, this.sprite.y - 21, this.hp, this.maxHp, 0x22c55e);
 
@@ -249,6 +251,16 @@ export class Tower {
     VisualFX.ring(this.scene, this.sprite.x, this.sprite.y, skill.particleColor ?? 0xbb86fc, skill.effect.aoeMultiplier ? 70 : 42);
     VisualFX.burstParticles(this.scene, this.sprite.x, this.sprite.y, skill.particleColor ?? 0xbb86fc);
     if (skill.effect.damageMultiplier && this.profile.id !== 'cesar') this.nextDamageMultiplier = skill.effect.damageMultiplier;
+    if (skill.id === 'mosasaur-era' && this.sprite instanceof Phaser.GameObjects.Image) {
+      this.isTransformed = true;
+      this.sprite.setTexture('xavi-mosasaur-idle').setDisplaySize(this.tileSize * 1.25, this.tileSize * 1.25);
+      this.scene.time.delayedCall(3000, () => {
+        if (this.sprite instanceof Phaser.GameObjects.Image) {
+          this.isTransformed = false;
+          this.sprite.setTexture('xavi-human-idle').setDisplaySize(this.tileSize * 0.9, this.tileSize * 0.9);
+        }
+      });
+    }
     if (skill.id === 'call-of-abyss') this.summons.push(new MiniMosasaur(this.scene, this.sprite.x, this.sprite.y, true));
     if (skill.effect.healAmount) {
       const allies = this.getAllies(towers, map);
