@@ -8,13 +8,22 @@ export class WaveSystem {
   private waves: WaveDefinition[] = [];
   private pending: { enemyId: string; remaining: number; intervalMs: number; nextSpawnAt: number }[] = [];
   public started = false;
+  private waitingForStart = true;
 
   setLevel(waves: WaveDefinition[]) {
     this.waves = waves;
   }
   start(time: number) {
     this.started = true;
+    this.startNextWave(time);
+  }
+
+  startNextWave(time: number) {
+    if (!this.started) this.started = true;
+    if (this.pending.length > 0 || this.wave >= this.maxWaves) return false;
     this.nextWaveAt = time;
+    this.waitingForStart = false;
+    return true;
   }
 
   update(time: number, activeEnemies: number, waves: WaveDefinition[], spawn: (enemyId: string) => void) {
@@ -29,7 +38,7 @@ export class WaveSystem {
       }
       return false;
     }
-    if (this.wave >= this.maxWaves) return activeEnemies === 0;
+    if (this.wave >= this.maxWaves || this.waitingForStart) return false;
     if (time < this.nextWaveAt || activeEnemies > 0) return false;
     this.wave++;
     const wave = (this.waves.length ? this.waves : waves)[this.wave - 1];
@@ -37,9 +46,11 @@ export class WaveSystem {
       this.pending = wave.entries.map(entry => ({ enemyId: entry.enemyId, remaining: entry.count, intervalMs: entry.intervalMs ?? 500, nextSpawnAt: time }));
     }
     this.nextWaveAt = time + this.waveDelay;
+    this.waitingForStart = true;
     return false;
   }
 
   setWaveDelay(delayMs: number) { this.waveDelay = delayMs; }
   get isSpawning() { return this.pending.length > 0; }
+  get canStartNextWave() { return this.started && this.waitingForStart && this.wave < this.maxWaves; }
 }

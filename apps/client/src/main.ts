@@ -76,6 +76,7 @@ class MainScene extends Phaser.Scene {
   private uiHud!: HTMLElement;
   private uiHudToggle!: HTMLButtonElement;
   private uiWaveButton!: HTMLButtonElement;
+  private uiNextWaveButton!: HTMLButtonElement;
   private uiThemeButton!: HTMLButtonElement;
   private uiCoins!: HTMLElement;
   private uiSkills!: HTMLElement;
@@ -305,6 +306,7 @@ class MainScene extends Phaser.Scene {
     this.uiHud = document.getElementById('game-status')!;
     this.uiHudToggle = document.getElementById('hud-toggle') as HTMLButtonElement;
     this.uiWaveButton = document.getElementById('wave-button') as HTMLButtonElement;
+    this.uiNextWaveButton = document.getElementById('next-wave-button') as HTMLButtonElement;
     this.uiThemeButton = document.getElementById('theme-toggle') as HTMLButtonElement;
     this.uiWaveButton.disabled = false;
     this.uiWaveButton.disabled = true;
@@ -352,6 +354,9 @@ class MainScene extends Phaser.Scene {
       this.waveSystem.start(this.time.now);
       this.uiPrepScreen.classList.add('hidden');
       this.uiWaveButton.disabled = false;
+    };
+    this.uiNextWaveButton.onclick = () => {
+      if (this.waveSystem.startNextWave(this.time.now)) this.updateGameStatus();
     };
     (document.getElementById('collection-button') as HTMLButtonElement).onclick = () => {
       this.updateCollectionUI();
@@ -727,6 +732,7 @@ class MainScene extends Phaser.Scene {
     this.uiWaveStatus.innerText = `Oleada: ${this.waveSystem.wave}/${this.waveSystem.maxWaves}`;
     this.uiGemStatus.innerText = `Joyas: ${aliveGems}/3`;
     this.uiEnemyStatus.innerText = `${activeEnemies}${this.waveSystem.isSpawning ? ' + entrando' : ''}`;
+    this.uiNextWaveButton.classList.toggle('visible', this.waveSystem.canStartNextWave && activeEnemies === 0);
     this.uiWaveProgress.style.width = `${(this.waveSystem.wave / this.waveSystem.maxWaves) * 100}%`;
     this.uiGemProgress.style.width = `${(aliveGems / this.gems.length) * 100}%`;
     this.uiWaveBannerTitle.innerText = `OLEADA ${this.waveSystem.wave} / ${this.waveSystem.maxWaves}`;
@@ -768,6 +774,11 @@ class MainScene extends Phaser.Scene {
       if (enemy.tryActivateSpecial()) {
         VisualFX.ring(this, enemy.sprite.x, enemy.sprite.y, enemy.profile.color, 34);
         VisualFX.floatText(this, enemy.sprite.x, enemy.sprite.y, enemy.profile.type === 'boss' ? '¡Furia!' : '¡Habilidad!', '#fca5a5');
+        if (enemy.profile.id === 'pibble') {
+          this.spawnEnemy('basic');
+          this.spawnEnemy('runner');
+          VisualFX.floatText(this, enemy.sprite.x, enemy.sprite.y - 22, '¡Refuerzos!', '#f9a8d4');
+        }
       }
 
       const attackRange = enemy.profile.type === 'boss' ? 100 : enemy.profile.ability === 'swarm' ? 70 : 52;
