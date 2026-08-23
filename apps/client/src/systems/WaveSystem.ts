@@ -5,6 +5,11 @@ export class WaveSystem {
   public readonly maxWaves = 5;
   private nextWaveAt = 12000;
   private waveDelay = 15000;
+  private waves: WaveDefinition[] = [];
+
+  setLevel(waves: WaveDefinition[]) {
+    this.waves = waves;
+  }
   private pending: { enemyId: string; remaining: number; intervalMs: number; nextSpawnAt: number }[] = [];
 
   update(time: number, activeEnemies: number, waves: WaveDefinition[], spawn: (enemyId: string) => void) {
@@ -21,7 +26,7 @@ export class WaveSystem {
     if (this.wave >= this.maxWaves) return activeEnemies === 0;
     if (time < this.nextWaveAt || activeEnemies > 0) return false;
     this.wave++;
-    const wave = waves[this.wave - 1];
+    const wave = (this.waves.length ? this.waves : waves)[this.wave - 1];
     if (wave) {
       this.pending = wave.entries.map(entry => ({ enemyId: entry.enemyId, remaining: entry.count, intervalMs: entry.intervalMs ?? 500, nextSpawnAt: time }));
     }

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { DijkstraMap, Angel, Lucy, Tribu, Kiu, Gretch, Cesar, EnemyData, Waves } from '@td-nya/game-data';
+import { DijkstraMap, Angel, Lucy, Tribu, Kiu, Gretch, Cesar, EnemyData, Levels } from '@td-nya/game-data';
 import { Enemy } from './entities/Enemy';
 import { Tower } from './entities/Tower';
 import { SacredGem } from './entities/SacredGem';
@@ -33,6 +33,7 @@ class MainScene extends Phaser.Scene {
   private rewardedWave = 0;
   private difficultyMultiplier = 1;
   private spawnIndex = 0;
+  private selectedLevel = Levels.level1;
   
   // Referencias a la UI HTML
   private selectedTower: Tower | null = null;
@@ -52,6 +53,7 @@ class MainScene extends Phaser.Scene {
   private uiGameState!: HTMLElement;
   private uiDifficulty!: HTMLSelectElement;
   private uiWaveDuration!: HTMLSelectElement;
+  private uiLevel!: HTMLSelectElement;
   private uiEndScreen!: HTMLElement;
   private uiEndTitle!: HTMLElement;
   private uiEndMessage!: HTMLElement;
@@ -73,6 +75,7 @@ class MainScene extends Phaser.Scene {
     this.gems = [];
     this.occupiedCells.clear();
     this.waveSystem = new WaveSystem();
+    this.waveSystem.setLevel(this.selectedLevel.waves);
     this.gameState = 'playing';
     this.isPaused = false;
     this.coins = 500;
@@ -191,7 +194,7 @@ class MainScene extends Phaser.Scene {
       this.coins += this.waveSystem.wave * 25;
       this.rewardedWave = this.waveSystem.wave;
     }
-    this.waveSystem.update(time, activeEnemies, Waves, enemyId => this.spawnEnemy(enemyId));
+    this.waveSystem.update(time, activeEnemies, this.selectedLevel.waves, enemyId => this.spawnEnemy(enemyId));
     // Ciclo de combate
     for (const tower of this.towers) {
       if (tower.isActive) tower.update(time, this.enemies, this.map, this.towers);
@@ -225,10 +228,10 @@ class MainScene extends Phaser.Scene {
     this.uiEndMessage = document.getElementById('end-message')!;
     this.uiRestartButton = document.getElementById('restart-button') as HTMLButtonElement;
     this.uiEndScreen.classList.remove('visible');
-    this.uiWaveButton.disabled = false;
     this.uiHud = document.getElementById('game-status')!;
     this.uiHudToggle = document.getElementById('hud-toggle') as HTMLButtonElement;
     this.uiWaveButton = document.getElementById('wave-button') as HTMLButtonElement;
+    this.uiWaveButton.disabled = false;
     this.uiCoins = document.getElementById('coin-status')!;
     this.uiSkills = document.getElementById('skill-status')!;
     this.uiSkillInfo = document.getElementById('skill-info')!;
@@ -252,6 +255,11 @@ class MainScene extends Phaser.Scene {
     });
     this.uiWaveDuration.addEventListener('change', () => {
       this.waveSystem.setWaveDelay(Number(this.uiWaveDuration.value));
+    });
+    this.uiLevel = document.getElementById('level-select') as HTMLSelectElement;
+    this.uiLevel.addEventListener('change', () => {
+      this.selectedLevel = Levels[this.uiLevel.value] ?? Levels.level1;
+      this.scene.restart();
     });
     this.uiRestartButton.onclick = () => this.scene.restart();
     this.uiHudToggle.addEventListener('click', () => {
