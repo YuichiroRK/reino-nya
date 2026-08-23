@@ -17,6 +17,7 @@ export class Enemy {
   private readonly onDefeated?: (reward: number, x: number, y: number) => void;
   private readonly healthBar: HealthBar;
   private lastGemAttack = 0;
+  private specialUsed = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, profile: EnemyProfile, targetGemIndex = 0, difficulty = 1, onDefeated?: (reward: number, x: number, y: number) => void) {
     this.profile = profile;
@@ -71,6 +72,16 @@ export class Enemy {
 
   updateHealthBar(x = this.sprite.x, y = this.sprite.y) {
     this.healthBar.update(x, y - 20, this.hp, this.maxHp, 0xef4444);
+  }
+
+  tryActivateSpecial() {
+    if (this.specialUsed) return false;
+    if (this.profile.ability === 'rage' && this.hp <= this.maxHp * 0.5) {
+      this.attackDamage *= 1.5;
+      this.specialUsed = true;
+      return true;
+    }
+    return false;
   }
 
   attackGem(gem: SacredGem, time: number) {

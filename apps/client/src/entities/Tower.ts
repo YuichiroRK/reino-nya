@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { CharacterProfile, TargetingPriority } from '@td-nya/shared';
+import { CharacterProfile, SkillTargetPriority, TargetingPriority } from '@td-nya/shared';
 import { Enemy } from './Enemy';
 import { DijkstraMap } from '@td-nya/game-data';
 import { VisualFX } from '../effects/VisualFX';
@@ -7,12 +7,14 @@ import { CombatSystem } from '../systems/CombatSystem';
 import { SkillSystem } from '../systems/SkillSystem';
 import { TargetingSystem } from '../systems/TargetingSystem';
 import { HealthBar } from './HealthBar';
+import { Projectile } from './Projectile';
 
 export class Tower {
   public profile: CharacterProfile;
   public sprite: Phaser.GameObjects.Rectangle;
   public rangeGraphics: Phaser.GameObjects.Graphics;
   public targetingPriority: TargetingPriority = TargetingPriority.CLOSEST_TO_CORE;
+  public skillTargetPriority: SkillTargetPriority = 'weakest';
   
   private lastFiredTime: number = 0;
   private scene: Phaser.Scene;
@@ -25,8 +27,9 @@ export class Tower {
   private nextAoeMultiplier = 1;
   public gridPos: { x: number; y: number };
   public hp: number;
-  public readonly maxHp: number;
+  public maxHp: number;
   public isActive = true;
+  public upgradeLevel = 1;
   private readonly healthBar: HealthBar;
 
   constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, profile: CharacterProfile, onClick: (t: Tower) => void) {
@@ -131,7 +134,7 @@ export class Tower {
   update(time: number, enemies: Enemy[], map: DijkstraMap, towers: Tower[] = []) {
     this.updateSkills(time, enemies, map, towers);
     const speedBoost = towers.reduce((boost, tower) => boost + tower.getSpeedBoostFor(this, time), 0);
-    const fireCooldownMs = 1000 / (this.profile.baseStats.attackSpeed * (1 + speedBoost));
+    const fireCooldownMs = 1000 / (this.profile.baseStats.attackSpeed * this.upgradeLevel * (1 + speedBoost));
     if (time - this.lastFiredTime < fireCooldownMs) return;
 
     const inRange = enemies.filter(e => {
@@ -168,6 +171,7 @@ export class Tower {
   }
 
   private fire(target: Enemy, enemies: Enemy[], map: DijkstraMap, towers: Tower[]) {
+    Projectile.fire(this.scene, this.sprite, target.sprite, this.profile.id, () => undefined);
     const line = this.scene.add.line(
       0, 0,
       this.sprite.x, this.sprite.y,
@@ -194,7 +198,7 @@ export class Tower {
     }
 
     const attackBoost = towers.reduce((boost, tower) => boost + tower.getAttackBoostFor(this, towers, map), 0);
-    const damage = CombatSystem.calculateDamage(this.profile.baseStats.attack, attackBoost, damageMultiplier);
+    const damage = CombatSystem.calculateDamage(this.profile.baseStats.attack * this.upgradeLevel, attackBoost, damageMultiplier);
     target.takeDamage(damage);
     if (aoeMultiplier > 1) {
       for (const enemy of enemies) {
@@ -242,8 +246,9 @@ export class Tower {
     VisualFX.burstParticles(this.scene, this.sprite.x, this.sprite.y, skill.particleColor ?? 0xbb86fc);
     if (skill.effect.damageMultiplier && this.profile.id !== 'cesar') this.nextDamageMultiplier = skill.effect.damageMultiplier;
     if (skill.effect.healAmount) {
-      const target = this.getAllies(towers, map).sort((a, b) => a.hp - b.hp)[0];
-      if (target) {
+      const allies = this.getAllies(towers, map);
+      const targets = this.skillTargetPriority === 'all' ? allies : [this.selectSkillAlly(allies)];
+      for (const target of targets) if (target) {
         target.heal(skill.effect.healAmount);
         VisualFX.ring(this.scene, target.sprite.x, target.sprite.y, 0x66bb6a, 30);
       }
@@ -268,6 +273,12 @@ export class Tower {
     return towers.filter(tower => tower !== this && tower.isActive &&
       Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, tower.sprite.x, tower.sprite.y) <= this.profile.baseStats.range &&
       this.hasLineOfSight(this.gridPos.x, this.gridPos.y, tower.gridPos.x, tower.gridPos.y, map));
+  }
+
+  private selectSkillAlly(allies: Tower[]) {
+    if (this.skillTargetPriority === 'strongest') return allies.sort((a, b) => b.maxHp - a.maxHp)[0];
+    if (this.skillTargetPriority === 'closest') return allies.sort((a, b) => Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, a.sprite.x, a.sprite.y) - Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, b.sprite.x, b.sprite.y))[0];
+    return allies.sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
   }
 
   private isInRange(enemy: Enemy) {
@@ -330,6 +341,19 @@ export class Tower {
       remainingMs: skill.type === 'active' ? Math.max(0, (this.skillCooldowns.get(skill.id) ?? 0) - time) : 0,
       active: skill.type === 'active' && (this.activeEffects.get(skill.id) ?? 0) > time,
     }));
+  }
+
+  get upgradeCost() { return 100 * this.upgradeLevel; }
+
+  upgrade() {
+    if (this.upgradeLevel >= 4) return false;
+    this.upgradeLevel++;
+    const previousMaxHp = this.maxHp;
+    this.maxHp = Math.round(this.maxHp * 1.2);
+    this.hp += this.maxHp - previousMaxHp;
+    this.healthBar.update(this.sprite.x, this.sprite.y - 21, this.hp, this.maxHp, 0x22c55e);
+    VisualFX.ring(this.scene, this.sprite.x, this.sprite.y, 0xfacc15, 35);
+    return true;
   }
 
   destroy() {

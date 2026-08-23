@@ -86,6 +86,8 @@ export interface Skill {
 
 export type EnemyType = 'basic' | 'runner' | 'armored' | 'flying' | 'boss';
 export type EnemyMovement = 'ground' | 'flying';
+export type EnemyAbility = 'dash' | 'shield' | 'swarm' | 'rage';
+export type SkillTargetPriority = 'weakest' | 'closest' | 'strongest' | 'all';
 
 export interface EnemyProfile {
   id: string;
@@ -99,6 +101,7 @@ export interface EnemyProfile {
   color: number;
   defense?: number;
   reward: number;
+  ability?: EnemyAbility;
 }
 
 export interface WaveEntry {

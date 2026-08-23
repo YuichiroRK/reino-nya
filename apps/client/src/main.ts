@@ -5,7 +5,8 @@ import { Tower } from './entities/Tower';
 import { SacredGem } from './entities/SacredGem';
 import { WaveSystem } from './systems/WaveSystem';
 import { VisualFX } from './effects/VisualFX';
-import { CharacterProfile, Rarity, TargetingPriority } from '@td-nya/shared';
+import { ProgressionSystem } from './systems/ProgressionSystem';
+import { CharacterProfile, Rarity, SkillTargetPriority, TargetingPriority } from '@td-nya/shared';
 
 const CHARACTER_MAP: Record<string, CharacterProfile> = {
   angel: Angel,
@@ -34,6 +35,8 @@ class MainScene extends Phaser.Scene {
   private difficultyMultiplier = 1;
   private spawnIndex = 0;
   private selectedLevel = Levels.level1;
+  private progression = new ProgressionSystem();
+  private doorCells = new Set<string>();
   
   // Referencias a la UI HTML
   private selectedTower: Tower | null = null;
@@ -64,6 +67,10 @@ class MainScene extends Phaser.Scene {
   private uiCoins!: HTMLElement;
   private uiSkills!: HTMLElement;
   private uiSkillInfo!: HTMLElement;
+  private uiSkillTarget!: HTMLSelectElement;
+  private uiUpgradeButton!: HTMLButtonElement;
+  private uiUpgradeInfo!: HTMLElement;
+  private uiProfileStatus!: HTMLElement;
 
   constructor() {
     super({ key: 'MainScene' });
@@ -81,6 +88,7 @@ class MainScene extends Phaser.Scene {
     this.coins = 500;
     this.rewardedWave = 0;
     this.spawnIndex = 0;
+    this.doorCells = new Set();
 
     const cols = 20;
     const rows = 20;
@@ -90,6 +98,7 @@ class MainScene extends Phaser.Scene {
     const centerX = 10;
     const centerY = 10;
     
+    this.createFortressDoors(centerX, centerY);
     this.generateRandomObstacles(cols, rows, centerX, centerY);
 
     this.map.calculate([{ x: centerX, y: centerY }]);
@@ -119,6 +128,10 @@ class MainScene extends Phaser.Scene {
       new SacredGem(this, 11, 10, this.tileSize, 1),
       new SacredGem(this, 10, 11, this.tileSize, 2),
     ];
+    for (const cell of this.doorCells) {
+      const [x, y] = cell.split(',').map(Number);
+      this.gridRects[y][x].setFillStyle(0x9a7b55);
+    }
 
     // Prevenir el menú contextual del navegador en click derecho
     this.input.mouse!.disableContextMenu();
@@ -192,6 +205,7 @@ class MainScene extends Phaser.Scene {
     const activeEnemies = this.enemies.filter(enemy => enemy.isActive).length;
     if (this.waveSystem.wave > this.rewardedWave && activeEnemies === 0) {
       this.coins += this.waveSystem.wave * 25;
+      this.progression.addExperience(this.waveSystem.wave * 20);
       this.rewardedWave = this.waveSystem.wave;
     }
     this.waveSystem.update(time, activeEnemies, this.selectedLevel.waves, enemyId => this.spawnEnemy(enemyId));
@@ -235,6 +249,10 @@ class MainScene extends Phaser.Scene {
     this.uiCoins = document.getElementById('coin-status')!;
     this.uiSkills = document.getElementById('skill-status')!;
     this.uiSkillInfo = document.getElementById('skill-info')!;
+    this.uiSkillTarget = document.getElementById('skill-target') as HTMLSelectElement;
+    this.uiUpgradeButton = document.getElementById('upgrade-tower') as HTMLButtonElement;
+    this.uiUpgradeInfo = document.getElementById('upgrade-info')!;
+    this.uiProfileStatus = document.getElementById('profile-status')!;
 
     this.uiCloseBtn.addEventListener('click', () => this.closeUIPanel());
     this.uiRemoveBtn.addEventListener('click', () => this.removeSelectedTower());
@@ -277,6 +295,10 @@ class MainScene extends Phaser.Scene {
       const skill = this.selectedTower?.profile.skills?.find(item => item.id === button?.dataset.skillId);
       if (skill) this.showSkillInfo(skill);
     });
+    this.uiSkillTarget.addEventListener('change', () => {
+      if (this.selectedTower) this.selectedTower.skillTargetPriority = this.uiSkillTarget.value as SkillTargetPriority;
+    });
+    this.uiUpgradeButton.addEventListener('click', () => this.upgradeSelectedTower());
     this.updateTowerLimit();
     this.updateEconomyUI();
 
@@ -335,10 +357,12 @@ class MainScene extends Phaser.Scene {
     this.selectedTower = tower;
     this.uiSkillInfo.classList.remove('visible');
     this.uiTowerName.innerText = tower.profile.name + ' - ' + tower.profile.title;
-    this.uiTowerRole.innerText = 'Rol: ' + tower.profile.roles.join(', ') + ' | Daño: ' + tower.profile.baseStats.attack + ' | Vida: ' + tower.hp + '/' + tower.maxHp;
+    this.uiTowerRole.innerText = 'Rol: ' + tower.profile.roles.join(', ') + ' | Daño: ' + tower.profile.baseStats.attack * tower.upgradeLevel + ' | Vida: ' + Math.ceil(tower.hp) + '/' + tower.maxHp + ' | Nv ' + tower.upgradeLevel;
     
     // Sincronizar el select
     this.uiTargetingSelect.value = tower.targetingPriority;
+    this.uiSkillTarget.value = tower.skillTargetPriority;
+    this.updateUpgradeUI(tower);
     this.updateSkillUI(tower);
     
     this.uiPanel.classList.add('active');
@@ -363,6 +387,22 @@ class MainScene extends Phaser.Scene {
         };
       }
     });
+  }
+
+  private updateUpgradeUI(tower: Tower) {
+    this.uiUpgradeInfo.innerText = tower.upgradeLevel >= 4 ? 'Nivel máximo' : `Nivel ${tower.upgradeLevel} · ${tower.upgradeCost} monedas`;
+    this.uiUpgradeButton.disabled = tower.upgradeLevel >= 4 || this.coins < tower.upgradeCost;
+  }
+
+  private upgradeSelectedTower() {
+    if (!this.selectedTower || this.coins < this.selectedTower.upgradeCost) return;
+    const cost = this.selectedTower.upgradeCost;
+    if (this.selectedTower.upgrade()) {
+      this.coins -= cost;
+      this.updateUpgradeUI(this.selectedTower);
+      this.uiTowerRole.innerText = `Rol: ${this.selectedTower.profile.roles.join(', ')} | Daño: ${this.selectedTower.profile.baseStats.attack * this.selectedTower.upgradeLevel} | Vida: ${Math.ceil(this.selectedTower.hp)}/${this.selectedTower.maxHp} | Nv ${this.selectedTower.upgradeLevel}`;
+      VisualFX.floatText(this, this.selectedTower.sprite.x, this.selectedTower.sprite.y, '¡Mejorada!', '#facc15');
+    }
   }
 
   private describeSkill(skill: NonNullable<CharacterProfile['skills']>[number]) {
@@ -416,6 +456,8 @@ class MainScene extends Phaser.Scene {
 
   private updateEconomyUI() {
     if (this.uiCoins) this.uiCoins.innerText = `Monedas: ${this.coins}`;
+    if (this.uiProfileStatus) this.uiProfileStatus.innerText = `Perfil Nv ${this.progression.level} · ${this.progression.experience}/${this.progression.experienceToNextLevel} XP`;
+    if (this.selectedTower) this.updateUpgradeUI(this.selectedTower);
   }
 
   private updateTowerLimit() {
@@ -443,8 +485,9 @@ class MainScene extends Phaser.Scene {
     const point = spawnPoints[this.spawnIndex++ % spawnPoints.length];
     const profile = EnemyData[enemyId] ?? EnemyData.basic;
     const wave = this.waveSystem.wave;
-    this.enemies.push(new Enemy(this, point.x, point.y, this.tileSize, profile, this.spawnIndex % this.gems.length, this.difficultyMultiplier + wave * 0.08, (reward, x, y) => {
-      this.coins += reward;
+        this.enemies.push(new Enemy(this, point.x, point.y, this.tileSize, profile, this.spawnIndex % this.gems.length, this.difficultyMultiplier + wave * 0.08, (reward, x, y) => {
+          this.coins += reward;
+          this.progression.addExperience(reward);
       VisualFX.floatText(this, x, y, `+${reward}`, '#fcd34d');
     }));
   }
@@ -487,7 +530,12 @@ class MainScene extends Phaser.Scene {
         continue;
       }
 
-      const attackRange = enemy.profile.type === 'boss' ? 100 : 52;
+      if (enemy.tryActivateSpecial()) {
+        VisualFX.ring(this, enemy.sprite.x, enemy.sprite.y, enemy.profile.color, 34);
+        VisualFX.floatText(this, enemy.sprite.x, enemy.sprite.y, enemy.profile.type === 'boss' ? '¡Furia!' : '¡Habilidad!', '#fca5a5');
+      }
+
+      const attackRange = enemy.profile.type === 'boss' ? 100 : enemy.profile.ability === 'swarm' ? 70 : 52;
       const tower = this.towers.filter(candidate => candidate.isActive && Phaser.Math.Distance.Between(enemy.sprite.x, enemy.sprite.y, candidate.sprite.x, candidate.sprite.y) <= attackRange)
         .sort((a, b) => Phaser.Math.Distance.Between(enemy.sprite.x, enemy.sprite.y, a.sprite.x, a.sprite.y) - Phaser.Math.Distance.Between(enemy.sprite.x, enemy.sprite.y, b.sprite.x, b.sprite.y))[0];
       if (tower) {
@@ -495,9 +543,15 @@ class MainScene extends Phaser.Scene {
         continue;
       }
 
-      const nextNode = enemy.profile.movement === 'flying'
+      let nextNode = enemy.profile.movement === 'flying'
         ? this.getDirectStep(enemy.gridPos.x, enemy.gridPos.y)
         : this.map.getNextStep(enemy.gridPos.x, enemy.gridPos.y);
+
+      if (nextNode && enemy.profile.ability === 'dash' && Math.random() < 0.2) {
+        nextNode = enemy.profile.movement === 'flying'
+          ? this.getDirectStep(nextNode.x, nextNode.y)
+          : this.map.getNextStep(nextNode.x, nextNode.y) ?? nextNode;
+      }
 
       if (!nextNode && (enemy.profile.type === 'armored' || enemy.profile.type === 'boss')) {
         this.tryOpenWall(enemy);
@@ -541,6 +595,27 @@ class MainScene extends Phaser.Scene {
     }
   }
 
+  private createFortressDoors(centerX: number, centerY: number) {
+    for (let x = centerX - 3; x <= centerX + 3; x++) {
+      if (x !== centerX) {
+        this.map.setWalkable(x, centerY - 3, false);
+        this.map.setWalkable(x, centerY + 3, false);
+      }
+    }
+    for (let y = centerY - 2; y <= centerY + 2; y++) {
+      if (y !== centerY) {
+        this.map.setWalkable(centerX - 3, y, false);
+        this.map.setWalkable(centerX + 3, y, false);
+      }
+    }
+    this.doorCells = new Set([
+      `${centerX},${centerY - 3}`,
+      `${centerX},${centerY + 3}`,
+      `${centerX - 3},${centerY}`,
+      `${centerX + 3},${centerY}`,
+    ]);
+  }
+
   private generateRandomObstacles(cols: number, rows: number, centerX: number, centerY: number) {
     const spawnPoints = [{ x: 0, y: 0 }, { x: 19, y: 0 }, { x: 0, y: 19 }, { x: 19, y: 19 }, { x: 10, y: 0 }, { x: 19, y: 10 }, { x: 0, y: 10 }];
     let placed = 0;
@@ -549,6 +624,7 @@ class MainScene extends Phaser.Scene {
       const x = 2 + Math.floor(Math.random() * (cols - 4));
       const y = 2 + Math.floor(Math.random() * (rows - 4));
       if (Math.abs(x - centerX) <= 2 && Math.abs(y - centerY) <= 2) continue;
+      if (this.doorCells.has(`${x},${y}`)) continue;
       if (!this.map.grid[y][x].isWalkable) continue;
 
       this.map.setWalkable(x, y, false);
