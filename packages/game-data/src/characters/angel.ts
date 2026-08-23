@@ -13,7 +13,7 @@ export const Angel: CharacterProfile = {
     attack: 60,
     defense: 80,
     magicDefense: 150,
-    range: 300,        // High range for aura
+    range: 180,        // Aura de reina — media distancia, buffea a los aliados cercanos
     attackSpeed: 0.8,  // Moderate attack speed
     moveSpeed: 0,      // Static tower-like placement
   },

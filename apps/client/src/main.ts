@@ -21,6 +21,7 @@ class MainScene extends Phaser.Scene {
   private tileSize = 32;
   private activeTool: 'tower' | 'wall' = 'tower';
   private selectedCharacter: CharacterProfile = Angel;
+  private occupiedCells = new Set<string>(); // Fix #2: prevent tower stacking
   
   // Referencias a la UI HTML
   private selectedTower: Tower | null = null;
@@ -85,9 +86,14 @@ class MainScene extends Phaser.Scene {
         if (pointer.rightButtonDown()) {
           // Usar Herramienta Activa
           if (this.activeTool === 'tower') {
-            if (this.map.grid[y][x].isWalkable && !(x === 10 && y === 10)) {
+            const cellKey = `${x},${y}`;
+            // Fix #2: block if occupied by another tower
+            if (this.map.grid[y][x].isWalkable && !(x === 10 && y === 10) && !this.occupiedCells.has(cellKey)) {
               const tower = new Tower(this, x, y, this.tileSize, this.selectedCharacter, (t) => this.openUIPanel(t));
+              // Fix #3: draw LoS range immediately
+              tower.drawRange(this.map);
               this.towers.push(tower);
+              this.occupiedCells.add(cellKey);
             }
           } else if (this.activeTool === 'wall') {
             if (!(x === 10 && y === 10)) {
@@ -176,12 +182,15 @@ class MainScene extends Phaser.Scene {
     const isNowWalkable = !node.isWalkable;
     
     this.map.setWalkable(x, y, isNowWalkable);
-    
-    // Recalcular mapa
     this.map.calculate([{ x: 10, y: 10 }]);
     
-    // Actualizar visual
+    // Update grid visual
     this.gridRects[y][x].setFillStyle(isNowWalkable ? 0x222222 : 0x888888);
+
+    // Fix #3: Redraw all tower ranges since walls changed
+    for (const tower of this.towers) {
+      tower.drawRange(this.map);
+    }
   }
 
   openUIPanel(tower: Tower) {

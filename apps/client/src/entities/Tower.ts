@@ -6,28 +6,24 @@ import { DijkstraMap } from '@td-nya/game-data';
 export class Tower {
   public profile: CharacterProfile;
   public sprite: Phaser.GameObjects.Rectangle;
-  public rangeCircle: Phaser.GameObjects.Arc;
+  public rangeGraphics: Phaser.GameObjects.Graphics;
   public targetingPriority: TargetingPriority = TargetingPriority.CLOSEST_TO_CORE;
   
   private lastFiredTime: number = 0;
   private scene: Phaser.Scene;
-  private gridPos: { x: number; y: number };
+  private tileSize: number;
+  public gridPos: { x: number; y: number };
 
   constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, profile: CharacterProfile, onClick: (t: Tower) => void) {
     this.scene = scene;
     this.profile = profile;
     this.gridPos = { x, y };
+    this.tileSize = tileSize;
 
-    // Draw range
-    this.rangeCircle = scene.add.circle(
-      x * tileSize + tileSize / 2,
-      y * tileSize + tileSize / 2,
-      profile.baseStats.range,
-      0x4444ff,
-      0.1
-    ).setStrokeStyle(1, 0x4444ff, 0.5);
+    // LoS-aware range overlay
+    this.rangeGraphics = scene.add.graphics();
 
-    // Draw tower body
+    // Draw tower body (on top of range overlay)
     this.sprite = scene.add.rectangle(
       x * tileSize + tileSize / 2,
       y * tileSize + tileSize / 2,
@@ -38,35 +34,95 @@ export class Tower {
 
     this.sprite.setInteractive({ useHandCursor: true });
     this.sprite.on('pointerdown', () => {
-      // Draw selection ring temporarily
       this.sprite.setStrokeStyle(2, 0xffffff);
       scene.time.delayedCall(200, () => this.sprite.setStrokeStyle(0));
       onClick(this);
     });
   }
 
-  update(time: number, enemies: Enemy[], map: DijkstraMap) {
-    // Check if it can fire based on attack speed (attacks per second)
-    const fireCooldownMs = 1000 / this.profile.baseStats.attackSpeed;
-    if (time - this.lastFiredTime < fireCooldownMs) {
-      return;
+  /**
+   * Redraw the LoS-aware range polygon using raycasting.
+   * Should be called after placement and after any wall changes.
+   */
+  drawRange(map: DijkstraMap) {
+    this.rangeGraphics.clear();
+
+    const cx = this.gridPos.x * this.tileSize + this.tileSize / 2;
+    const cy = this.gridPos.y * this.tileSize + this.tileSize / 2;
+    const maxRange = this.profile.baseStats.range;
+    const RAY_COUNT = 120; // smoothness
+
+    const points: { x: number; y: number }[] = [];
+
+    for (let i = 0; i < RAY_COUNT; i++) {
+      const angle = (i / RAY_COUNT) * Math.PI * 2;
+      const dx = Math.cos(angle);
+      const dy = Math.sin(angle);
+
+      // Step along the ray in pixel increments
+      let hit = maxRange; // assume open until wall found
+      for (let dist = 0; dist <= maxRange; dist += this.tileSize * 0.5) {
+        const px = cx + dx * dist;
+        const py = cy + dy * dist;
+        const gx = Math.floor(px / this.tileSize);
+        const gy = Math.floor(py / this.tileSize);
+
+        if (
+          gy < 0 || gy >= map.grid.length ||
+          gx < 0 || gx >= map.grid[0].length
+        ) {
+          hit = dist;
+          break;
+        }
+
+        if (!map.grid[gy][gx].isWalkable) {
+          // Stop just before the wall cell edge
+          hit = Math.max(0, dist - this.tileSize * 0.5);
+          break;
+        }
+      }
+
+      points.push({
+        x: cx + dx * hit,
+        y: cy + dy * hit,
+      });
     }
 
-    // Filter enemies in range AND in Line of Sight
+    // Filled LoS polygon
+    this.rangeGraphics.fillStyle(0x4466ff, 0.12);
+    this.rangeGraphics.beginPath();
+    this.rangeGraphics.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      this.rangeGraphics.lineTo(points[i].x, points[i].y);
+    }
+    this.rangeGraphics.closePath();
+    this.rangeGraphics.fillPath();
+
+    // Outline
+    this.rangeGraphics.lineStyle(1, 0x4466ff, 0.5);
+    this.rangeGraphics.beginPath();
+    this.rangeGraphics.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      this.rangeGraphics.lineTo(points[i].x, points[i].y);
+    }
+    this.rangeGraphics.closePath();
+    this.rangeGraphics.strokePath();
+  }
+
+  update(time: number, enemies: Enemy[], map: DijkstraMap) {
+    const fireCooldownMs = 1000 / this.profile.baseStats.attackSpeed;
+    if (time - this.lastFiredTime < fireCooldownMs) return;
+
     const inRange = enemies.filter(e => {
       if (!e.isActive) return false;
       const dist = Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, e.sprite.x, e.sprite.y);
       if (dist > this.profile.baseStats.range) return false;
-      
-      // Check Line of Sight using Bresenham
       return this.hasLineOfSight(this.gridPos.x, this.gridPos.y, e.gridPos.x, e.gridPos.y, map);
     });
 
     if (inRange.length === 0) return;
 
-    // Apply Targeting Priority
     const target = this.selectTarget(inRange, map);
-
     if (target) {
       this.fire(target);
       this.lastFiredTime = time;
@@ -81,9 +137,7 @@ export class Tower {
     let err = dx - dy;
 
     while (true) {
-      if (map.grid[y0] && map.grid[y0][x0] && !map.grid[y0][x0].isWalkable) {
-        return false; // Choca con un muro
-      }
+      if (map.grid[y0] && map.grid[y0][x0] && !map.grid[y0][x0].isWalkable) return false;
       if (x0 === x1 && y0 === y1) break;
       let e2 = 2 * err;
       if (e2 > -dy) { err -= dy; x0 += sx; }
@@ -109,7 +163,6 @@ export class Tower {
 
       case TargetingPriority.CLOSEST_TO_CORE:
       default:
-        // Use Dijkstra distance
         return enemies.reduce((prev, curr) => {
           const distPrev = map.grid[prev.gridPos.y][prev.gridPos.x].distance;
           const distCurr = map.grid[curr.gridPos.y][curr.gridPos.x].distance;
@@ -119,7 +172,6 @@ export class Tower {
   }
 
   private fire(target: Enemy) {
-    // Visual line
     const line = this.scene.add.line(
       0, 0,
       this.sprite.x, this.sprite.y,
@@ -134,7 +186,6 @@ export class Tower {
       onComplete: () => line.destroy()
     });
 
-    // Apply damage
     target.takeDamage(this.profile.baseStats.attack);
   }
 }

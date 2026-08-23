@@ -14,7 +14,7 @@ export const Tribu: CharacterProfile = {
     attack: 75,         // Moderado — su poder real es buffear aliados
     defense: 90,
     magicDefense: 70,
-    range: 280,         // Segunda línea: alcance amplio para cubrir aliados
+    range: 240,         // Segunda línea: alcance amplio para cubrir aliados
     attackSpeed: 1.0,
     moveSpeed: 0,
   },
