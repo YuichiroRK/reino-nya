@@ -6,6 +6,7 @@ import { SacredGem } from './entities/SacredGem';
 import { WaveSystem } from './systems/WaveSystem';
 import { VisualFX } from './effects/VisualFX';
 import { ProgressionSystem } from './systems/ProgressionSystem';
+import { CharacterProgressionSystem } from './systems/CharacterProgressionSystem';
 import { CharacterProfile, Rarity, SkillTargetPriority, TargetingPriority } from '@td-nya/shared';
 
 const CHARACTER_MAP: Record<string, CharacterProfile> = {
@@ -38,6 +39,7 @@ class MainScene extends Phaser.Scene {
   private selectedEnemyId = 'basic';
   private selectedLevel = Levels.level1;
   private progression = new ProgressionSystem();
+  private characterProgression = new CharacterProgressionSystem();
   private doorCells = new Set<string>();
   
   // Referencias a la UI HTML
@@ -195,6 +197,7 @@ class MainScene extends Phaser.Scene {
             // Fix #2: block if occupied by another tower
             if (!(x === 10 && y === 10) && !this.occupiedCells.has(cellKey) && this.canPlaceCharacter(this.selectedCharacter) && this.auraPoints >= this.getTowerCost(this.selectedCharacter)) {
               const tower = new Tower(this, x, y, this.tileSize, this.selectedCharacter, (t) => this.openUIPanel(t));
+              tower.globalLevel = this.characterProgression.get(this.selectedCharacter.id).level;
               // Fix #3: draw LoS range immediately
               tower.drawRange(this.map);
               this.towers.push(tower);
@@ -626,6 +629,12 @@ class MainScene extends Phaser.Scene {
     if (this.uiCoins) this.uiCoins.innerText = `Aura Points: ${this.auraPoints}`;
     if (this.uiProfileStatus) this.uiProfileStatus.innerText = `Perfil Nv ${this.progression.level} · ${this.progression.experience}/${this.progression.experienceToNextLevel} XP`;
     if (this.selectedTower) this.updateUpgradeUI(this.selectedTower);
+    document.querySelectorAll<HTMLElement>('.roster-card').forEach(card => {
+      const id = card.dataset.character;
+      const profile = id ? CHARACTER_MAP[id] : undefined;
+      const cost = card.querySelector('.roster-cost');
+      if (profile && cost) cost.innerText = `${this.getTowerCost(profile)} AP · Nv ${this.characterProgression.get(profile.id).level}`;
+    });
   }
 
   private updateTowerLimit() {
@@ -656,6 +665,7 @@ class MainScene extends Phaser.Scene {
         this.enemies.push(new Enemy(this, point.x, point.y, this.tileSize, profile, this.spawnIndex % this.gems.length, this.difficultyMultiplier + wave * 0.08, (reward, x, y) => {
           this.auraPoints += reward;
           this.progression.addExperience(reward);
+          for (const tower of this.towers) this.characterProgression.addExperience(tower.profile.id, Math.max(1, Math.floor(reward / 5)));
       VisualFX.floatText(this, x, y, `+${reward}`, '#fcd34d');
     }));
   }

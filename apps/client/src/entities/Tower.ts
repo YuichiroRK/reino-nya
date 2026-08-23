@@ -31,6 +31,7 @@ export class Tower {
   public maxHp: number;
   public isActive = true;
   public upgradeLevel = 1;
+  public globalLevel = 1;
   public isTransformed = false;
   private readonly healthBar: HealthBar;
   private summons: MiniMosasaur[] = [];
@@ -201,7 +202,8 @@ export class Tower {
     }
 
     const attackBoost = towers.reduce((boost, tower) => boost + tower.getAttackBoostFor(this, towers, map), 0);
-    const damage = CombatSystem.calculateDamage(this.profile.baseStats.attack * this.upgradeLevel, attackBoost, damageMultiplier);
+    const globalMultiplier = 1 + (this.globalLevel - 1) * 0.03;
+    const damage = CombatSystem.calculateDamage(this.profile.baseStats.attack * this.upgradeLevel * globalMultiplier, attackBoost, damageMultiplier);
     target.takeDamage(damage);
     if (aoeMultiplier > 1) {
       for (const enemy of enemies) {
