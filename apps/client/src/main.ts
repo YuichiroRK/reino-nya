@@ -46,6 +46,8 @@ class MainScene extends Phaser.Scene {
   private uiGemProgress!: HTMLElement;
   private uiEnemyStatus!: HTMLElement;
   private uiGameState!: HTMLElement;
+  private uiHud!: HTMLElement;
+  private uiHudToggle!: HTMLButtonElement;
   private uiWaveButton!: HTMLButtonElement;
   private uiCoins!: HTMLElement;
   private uiSkills!: HTMLElement;
@@ -188,6 +190,8 @@ class MainScene extends Phaser.Scene {
     this.uiGemProgress = document.getElementById('gem-progress')!;
     this.uiEnemyStatus = document.getElementById('enemy-status')!;
     this.uiGameState = document.getElementById('game-state')!;
+    this.uiHud = document.getElementById('game-status')!;
+    this.uiHudToggle = document.getElementById('hud-toggle') as HTMLButtonElement;
     this.uiWaveButton = document.getElementById('wave-button') as HTMLButtonElement;
     this.uiCoins = document.getElementById('coin-status')!;
     this.uiSkills = document.getElementById('skill-status')!;
@@ -199,6 +203,10 @@ class MainScene extends Phaser.Scene {
       this.uiWaveButton.innerText = this.isPaused ? 'Continuar' : 'Pausar';
       this.uiGameState.innerText = this.isPaused ? 'PAUSADO' : 'EN JUEGO';
       this.uiGameState.style.color = this.isPaused ? '#fcd34d' : '#a7f3d0';
+    });
+    this.uiHudToggle.addEventListener('click', () => {
+      const collapsed = this.uiHud.classList.toggle('collapsed');
+      this.uiHudToggle.innerText = collapsed ? 'Mostrar' : 'Ocultar';
     });
     this.updateTowerLimit();
     this.updateEconomyUI();

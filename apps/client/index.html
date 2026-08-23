@@ -208,7 +208,7 @@
       line-height: 1.4;
     }
 
-    .hud-header { display: flex; justify-content: space-between; margin-bottom: 12px; color: #aaa; font-size: 0.68rem; font-weight: bold; letter-spacing: 0.14em; text-transform: uppercase; }
+    .hud-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; color: #aaa; font-size: 0.68rem; font-weight: bold; letter-spacing: 0.14em; text-transform: uppercase; }
     #game-state { color: #a7f3d0; letter-spacing: 0; }
     .hud-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .hud-card { padding: 9px 10px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 9px; background: rgba(255, 255, 255, 0.045); }
@@ -221,6 +221,10 @@
     .progress-fill { width: 100%; height: 100%; border-radius: inherit; transition: width 0.25s ease; }
     #wave-progress { background: #a78bfa; }
     #gem-progress { background: #22d3ee; }
+    #hud-toggle { padding: 3px 7px; border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 5px; background: rgba(255, 255, 255, 0.08); color: #ddd; cursor: pointer; font-size: 0.65rem; letter-spacing: 0; text-transform: none; }
+    #game-status.collapsed { width: auto; padding: 9px 11px; }
+    #game-status.collapsed .hud-header { margin-bottom: 0; }
+    #game-status.collapsed .hud-grid, #game-status.collapsed #wave-button { display: none; }
 
     #wave-button {
       width: 100%;
@@ -251,8 +255,8 @@
 </head>
 <body>
   <div id="game-container"></div>
-  <div id="game-status">
-    <div class="hud-header"><span>Imperio del Nya</span><span id="game-state">EN JUEGO</span></div>
+  <div id="game-status" class="collapsed">
+    <div class="hud-header"><span>Imperio del Nya</span><span id="game-state">EN JUEGO</span><button id="hud-toggle">Mostrar</button></div>
     <div class="hud-grid">
       <div class="hud-card wide"><span class="hud-card-label">Oleada</span><span class="hud-value" id="wave-status">0 / 5</span><div class="progress-track"><div class="progress-fill" id="wave-progress"></div></div></div>
       <div class="hud-card"><span class="hud-card-label">Joyas</span><span class="hud-value" id="gem-status">3 / 3</span><div class="progress-track"><div class="progress-fill" id="gem-progress"></div></div></div>
