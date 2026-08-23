@@ -4,5 +4,5 @@ RUN npm install -g pnpm
 
 WORKDIR /usr/src/app
 
-# For development, we run the dev script inside the container
-CMD ["pnpm", "--filter", "server", "dev"]
+# Install dependencies automatically just in case, then run
+CMD ["sh", "-c", "pnpm install && pnpm --filter server dev"]

@@ -4,5 +4,5 @@ RUN npm install -g pnpm
 
 WORKDIR /usr/src/app
 
-# Since we use volumes for development, we just start the dev server
-CMD ["pnpm", "--filter", "client", "dev", "--host"]
+# Install dependencies automatically just in case, then run
+CMD ["sh", "-c", "pnpm install && pnpm --filter client dev --host"]
