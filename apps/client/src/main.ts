@@ -3,8 +3,7 @@ import { DijkstraMap } from '@td-nya/game-data';
 
 class MainScene extends Phaser.Scene {
   private map!: DijkstraMap;
-  private enemy!: Phaser.GameObjects.Rectangle;
-  private enemyGridPos: { x: number; y: number } = { x: 0, y: 0 };
+  private enemies: { sprite: Phaser.GameObjects.Rectangle; gridPos: { x: number; y: number } }[] = [];
   private tileSize = 32;
 
   constructor() {
@@ -65,47 +64,61 @@ class MainScene extends Phaser.Scene {
       }
     }
 
-    // 6. Crear el enemigo en la esquina superior izquierda
-    this.enemyGridPos = { x: 0, y: 0 };
-    this.enemy = this.add.rectangle(
-      this.enemyGridPos.x * this.tileSize + this.tileSize / 2,
-      this.enemyGridPos.y * this.tileSize + this.tileSize / 2,
-      this.tileSize * 0.6,
-      this.tileSize * 0.6,
-      0xff0000 // Enemigo (Rojo)
-    );
+    // 6. Escuchar clicks para spawnear enemigos
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      const x = Math.floor(pointer.x / this.tileSize);
+      const y = Math.floor(pointer.y / this.tileSize);
+
+      // Solo spawnear si es una casilla válida y no es una muralla
+      if (x >= 0 && x < cols && y >= 0 && y < rows && this.map.grid[y][x].isWalkable) {
+        this.spawnEnemy(x, y);
+      }
+    });
 
     // 7. Loop de movimiento (cada 0.4s el enemigo da un paso)
     this.time.addEvent({
       delay: 400,
-      callback: this.moveEnemy,
+      callback: this.moveEnemies,
       callbackScope: this,
       loop: true
     });
 
     // Texto de interfaz
-    this.add.text(10, rows * this.tileSize + 10, 'Prueba Visual: Dijkstra Flow Field', { fontSize: '20px', color: '#ffffff' });
+    this.add.text(10, rows * this.tileSize + 10, 'Prueba Visual: Haz click en el mapa para crear enemigos', { fontSize: '20px', color: '#ffffff' });
   }
 
-  moveEnemy() {
-    // Verificar si ya llegó al centro
-    if (this.enemyGridPos.x === 10 && this.enemyGridPos.y === 10) return;
+  spawnEnemy(x: number, y: number) {
+    const sprite = this.add.rectangle(
+      x * this.tileSize + this.tileSize / 2,
+      y * this.tileSize + this.tileSize / 2,
+      this.tileSize * 0.6,
+      this.tileSize * 0.6,
+      0xff0000 // Enemigo (Rojo)
+    );
+    this.enemies.push({ sprite, gridPos: { x, y } });
+  }
 
-    // Pedirle al algoritmo el siguiente paso
-    const nextNode = this.map.getNextStep(this.enemyGridPos.x, this.enemyGridPos.y);
+  moveEnemies() {
+    for (const enemyData of this.enemies) {
+      // Verificar si ya llegó al centro
+      if (enemyData.gridPos.x === 10 && enemyData.gridPos.y === 10) continue;
 
-    if (nextNode) {
-      this.enemyGridPos.x = nextNode.x;
-      this.enemyGridPos.y = nextNode.y;
+      // Pedirle al algoritmo el siguiente paso
+      const nextNode = this.map.getNextStep(enemyData.gridPos.x, enemyData.gridPos.y);
 
-      // Animar movimiento visualmente en Phaser
-      this.tweens.add({
-        targets: this.enemy,
-        x: this.enemyGridPos.x * this.tileSize + this.tileSize / 2,
-        y: this.enemyGridPos.y * this.tileSize + this.tileSize / 2,
-        duration: 200,
-        ease: 'Linear'
-      });
+      if (nextNode) {
+        enemyData.gridPos.x = nextNode.x;
+        enemyData.gridPos.y = nextNode.y;
+
+        // Animar movimiento visualmente en Phaser
+        this.tweens.add({
+          targets: enemyData.sprite,
+          x: enemyData.gridPos.x * this.tileSize + this.tileSize / 2,
+          y: enemyData.gridPos.y * this.tileSize + this.tileSize / 2,
+          duration: 200,
+          ease: 'Linear'
+        });
+      }
     }
   }
 }
