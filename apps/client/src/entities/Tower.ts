@@ -6,6 +6,7 @@ import { VisualFX } from '../effects/VisualFX';
 import { CombatSystem } from '../systems/CombatSystem';
 import { SkillSystem } from '../systems/SkillSystem';
 import { TargetingSystem } from '../systems/TargetingSystem';
+import { HealthBar } from './HealthBar';
 
 export class Tower {
   public profile: CharacterProfile;
@@ -25,6 +26,7 @@ export class Tower {
   public gridPos: { x: number; y: number };
   public hp: number;
   public readonly maxHp: number;
+  private readonly healthBar: HealthBar;
 
   constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, profile: CharacterProfile, onClick: (t: Tower) => void) {
     this.scene = scene;
@@ -33,6 +35,7 @@ export class Tower {
     this.tileSize = tileSize;
     this.maxHp = profile.baseStats.hp;
     this.hp = this.maxHp;
+    this.healthBar = new HealthBar(scene, 28);
 
     // LoS-aware range overlay
     this.rangeGraphics = scene.add.graphics();
@@ -45,6 +48,7 @@ export class Tower {
       tileSize * 0.8,
       0x4444ff
     );
+    this.healthBar.update(this.sprite.x, this.sprite.y - 21, this.hp, this.maxHp, 0x22c55e);
 
     this.sprite.setInteractive({ useHandCursor: true });
     this.sprite.on('pointerdown', () => {
@@ -279,6 +283,7 @@ export class Tower {
 
   heal(amount: number) {
     this.hp = Math.min(this.maxHp, this.hp + amount);
+    this.healthBar.update(this.sprite.x, this.sprite.y - 21, this.hp, this.maxHp, 0x22c55e);
   }
 
   getSkillStatuses(time: number) {
@@ -291,6 +296,7 @@ export class Tower {
   }
 
   destroy() {
+    this.healthBar.destroy();
     this.rangeGraphics.destroy();
     this.sprite.destroy();
   }

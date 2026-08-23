@@ -122,6 +122,8 @@
     #char-select:focus {
       border-color: var(--primary-color);
     }
+
+    .config-label { color: #888; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
     
     #ui-panel.active {
       right: 20px; /* Visible */
@@ -266,6 +268,13 @@
     .skill-state { white-space: nowrap; color: #86efac; font-size: 0.7rem; font-weight: bold; }
     .cooldown .skill-state { color: #94a3b8; }
 
+    #end-screen { position: fixed; inset: 0; z-index: 30; display: none; place-items: center; background: rgba(5, 5, 8, 0.78); backdrop-filter: blur(8px); }
+    #end-screen.visible { display: grid; }
+    .end-card { width: min(390px, calc(100vw - 32px)); padding: 32px 24px; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 18px; background: #1b1b23; text-align: center; box-shadow: 0 18px 60px rgba(0, 0, 0, 0.5); }
+    #end-title { margin: 0 0 8px; color: #f4f4f5; font-size: 2rem; }
+    #end-message { margin: 0 0 22px; color: #a1a1aa; }
+    #restart-button { padding: 11px 22px; border: 0; border-radius: 8px; background: var(--primary-color); color: #17121f; cursor: pointer; font-weight: 700; }
+
     @media (max-width: 700px) {
       #game-container { left: 0; width: 100vw; }
       #game-status { top: 10px; left: 10px; width: 205px; padding: 10px; }
@@ -310,6 +319,18 @@
       </select>
       <p id="tower-price">Coste: 250 monedas</p>
       <p id="tower-limit">Angel: 0/1</p>
+      <label class="config-label" for="difficulty-select">Dificultad</label>
+      <select id="difficulty-select">
+        <option value="0.85">Tranquila</option>
+        <option value="1" selected>Normal</option>
+        <option value="1.25">Asedio</option>
+      </select>
+      <label class="config-label" for="wave-duration">Tiempo entre oleadas</label>
+      <select id="wave-duration">
+        <option value="5000">5 segundos</option>
+        <option value="8000" selected>8 segundos</option>
+        <option value="12000">12 segundos</option>
+      </select>
     </div>
   </div>
 
@@ -334,6 +355,13 @@
       <div id="skill-status">Selecciona una torre</div>
     </div>
     <button id="remove-tower">Quitar torre</button>
+  </div>
+  <div id="end-screen">
+    <div class="end-card">
+      <h1 id="end-title">Fin de la partida</h1>
+      <p id="end-message"></p>
+      <button id="restart-button">Reiniciar partida</button>
+    </div>
   </div>
   <script type="module" src="/src/main.ts"></script>
 </body>

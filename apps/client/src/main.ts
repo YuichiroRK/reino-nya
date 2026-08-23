@@ -4,7 +4,8 @@ import { Enemy } from './entities/Enemy';
 import { Tower } from './entities/Tower';
 import { SacredGem } from './entities/SacredGem';
 import { WaveSystem } from './systems/WaveSystem';
-import { CharacterProfile, Rarity, TargetingPriority, WaveDefinition } from '@td-nya/shared';
+import { VisualFX } from './effects/VisualFX';
+import { CharacterProfile, Rarity, TargetingPriority } from '@td-nya/shared';
 
 const CHARACTER_MAP: Record<string, CharacterProfile> = {
   angel: Angel,
@@ -30,6 +31,8 @@ class MainScene extends Phaser.Scene {
   private isPaused = false;
   private coins = 500;
   private rewardedWave = 0;
+  private difficultyMultiplier = 1;
+  private spawnIndex = 0;
   
   // Referencias a la UI HTML
   private selectedTower: Tower | null = null;
@@ -47,6 +50,12 @@ class MainScene extends Phaser.Scene {
   private uiGemProgress!: HTMLElement;
   private uiEnemyStatus!: HTMLElement;
   private uiGameState!: HTMLElement;
+  private uiDifficulty!: HTMLSelectElement;
+  private uiWaveDuration!: HTMLSelectElement;
+  private uiEndScreen!: HTMLElement;
+  private uiEndTitle!: HTMLElement;
+  private uiEndMessage!: HTMLElement;
+  private uiRestartButton!: HTMLButtonElement;
   private uiHud!: HTMLElement;
   private uiHudToggle!: HTMLButtonElement;
   private uiWaveButton!: HTMLButtonElement;
@@ -164,7 +173,7 @@ class MainScene extends Phaser.Scene {
       this.coins += this.waveSystem.wave * 25;
       this.rewardedWave = this.waveSystem.wave;
     }
-    this.waveSystem.update(time, activeEnemies, Waves, wave => this.spawnWave(wave));
+    this.waveSystem.update(time, activeEnemies, Waves, enemyId => this.spawnEnemy(enemyId));
     // Ciclo de combate
     for (const tower of this.towers) {
       tower.update(time, this.enemies, this.map, this.towers);
@@ -173,7 +182,7 @@ class MainScene extends Phaser.Scene {
     this.updateEconomyUI();
     if (this.selectedTower) this.updateSkillUI(this.selectedTower);
     if (this.gems.every(gem => gem.isDestroyed)) this.endGame('defeat');
-    else if (this.waveSystem.wave >= this.waveSystem.maxWaves && this.enemies.every(enemy => !enemy.isActive)) this.endGame('victory');
+    else if (this.waveSystem.wave >= this.waveSystem.maxWaves && !this.waveSystem.isSpawning && this.enemies.every(enemy => !enemy.isActive)) this.endGame('victory');
   }
 
   setupHTMLUI() {
@@ -191,6 +200,12 @@ class MainScene extends Phaser.Scene {
     this.uiGemProgress = document.getElementById('gem-progress')!;
     this.uiEnemyStatus = document.getElementById('enemy-status')!;
     this.uiGameState = document.getElementById('game-state')!;
+    this.uiDifficulty = document.getElementById('difficulty-select') as HTMLSelectElement;
+    this.uiWaveDuration = document.getElementById('wave-duration') as HTMLSelectElement;
+    this.uiEndScreen = document.getElementById('end-screen')!;
+    this.uiEndTitle = document.getElementById('end-title')!;
+    this.uiEndMessage = document.getElementById('end-message')!;
+    this.uiRestartButton = document.getElementById('restart-button') as HTMLButtonElement;
     this.uiHud = document.getElementById('game-status')!;
     this.uiHudToggle = document.getElementById('hud-toggle') as HTMLButtonElement;
     this.uiWaveButton = document.getElementById('wave-button') as HTMLButtonElement;
@@ -211,6 +226,13 @@ class MainScene extends Phaser.Scene {
       this.uiGameState.innerText = this.isPaused ? 'PAUSADO' : 'EN JUEGO';
       this.uiGameState.style.color = this.isPaused ? '#fcd34d' : '#a7f3d0';
     });
+    this.uiDifficulty.addEventListener('change', () => {
+      this.difficultyMultiplier = Number(this.uiDifficulty.value);
+    });
+    this.uiWaveDuration.addEventListener('change', () => {
+      this.waveSystem.setWaveDelay(Number(this.uiWaveDuration.value));
+    });
+    this.uiRestartButton.onclick = () => this.scene.restart();
     this.uiHudToggle.addEventListener('click', () => {
       const collapsed = this.uiHud.classList.toggle('collapsed');
       this.uiHudToggle.innerText = collapsed ? 'Mostrar' : 'Ocultar';
@@ -344,18 +366,15 @@ class MainScene extends Phaser.Scene {
     this.updateEconomyUI();
   }
 
-  private spawnWave(wave: WaveDefinition) {
+  private spawnEnemy(enemyId: string) {
     const spawnPoints = [{ x: 0, y: 0 }, { x: 19, y: 0 }, { x: 0, y: 19 }, { x: 19, y: 19 }, { x: 10, y: 0 }, { x: 19, y: 10 }, { x: 0, y: 10 }];
-    let spawnIndex = 0;
-    for (const entry of wave.entries) {
-      const profile = EnemyData[entry.enemyId] ?? EnemyData.basic;
-      for (let count = 0; count < entry.count; count++) {
-        const point = spawnPoints[spawnIndex++ % spawnPoints.length];
-        this.enemies.push(new Enemy(this, point.x, point.y, this.tileSize, profile, spawnIndex % this.gems.length, 1 + wave.number * 0.08, reward => {
-          this.coins += reward;
-        }));
-      }
-    }
+    const point = spawnPoints[this.spawnIndex++ % spawnPoints.length];
+    const profile = EnemyData[enemyId] ?? EnemyData.basic;
+    const wave = this.waveSystem.wave;
+    this.enemies.push(new Enemy(this, point.x, point.y, this.tileSize, profile, this.spawnIndex % this.gems.length, this.difficultyMultiplier + wave * 0.08, (reward, x, y) => {
+      this.coins += reward;
+      VisualFX.floatText(this, x, y, `+${reward}`, '#fcd34d');
+    }));
   }
 
   private updateGameStatus() {
@@ -363,7 +382,7 @@ class MainScene extends Phaser.Scene {
     const activeEnemies = this.enemies.filter(enemy => enemy.isActive).length;
     this.uiWaveStatus.innerText = `Oleada: ${this.waveSystem.wave}/${this.waveSystem.maxWaves}`;
     this.uiGemStatus.innerText = `Joyas: ${aliveGems}/3`;
-    this.uiEnemyStatus.innerText = `${activeEnemies}`;
+    this.uiEnemyStatus.innerText = `${activeEnemies}${this.waveSystem.isSpawning ? ' + entrando' : ''}`;
     this.uiWaveProgress.style.width = `${(this.waveSystem.wave / this.waveSystem.maxWaves) * 100}%`;
     this.uiGemProgress.style.width = `${(aliveGems / this.gems.length) * 100}%`;
   }
@@ -373,11 +392,9 @@ class MainScene extends Phaser.Scene {
     this.uiGameState.innerText = state === 'victory' ? 'VICTORIA' : 'DERROTA';
     this.uiGameState.style.color = state === 'victory' ? '#86efac' : '#fca5a5';
     this.uiWaveButton.disabled = true;
-    const message = state === 'victory' ? '¡VICTORIA! Todas las oleadas superadas' : 'DERROTA: Las tres joyas fueron destruidas';
-    this.add.text(this.scale.width / 2, this.scale.height / 2, message, {
-      fontSize: '26px', color: state === 'victory' ? '#a5d6a7' : '#ef9a9a',
-      backgroundColor: '#121212', padding: { x: 18, y: 12 },
-    }).setOrigin(0.5).setDepth(20);
+    this.uiEndTitle.innerText = state === 'victory' ? 'Victoria' : 'Derrota';
+    this.uiEndMessage.innerText = state === 'victory' ? 'Has sobrevivido al asedio.' : 'Las tres joyas fueron destruidas.';
+    this.uiEndScreen.classList.add('visible');
   }
 
   moveEnemies() {
@@ -398,6 +415,10 @@ class MainScene extends Phaser.Scene {
         ? this.getDirectStep(enemy.gridPos.x, enemy.gridPos.y)
         : this.map.getNextStep(enemy.gridPos.x, enemy.gridPos.y);
 
+      if (!nextNode && (enemy.profile.type === 'armored' || enemy.profile.type === 'boss')) {
+        this.tryOpenWall(enemy);
+      }
+
       if (nextNode) {
         enemy.gridPos.x = nextNode.x;
         enemy.gridPos.y = nextNode.y;
@@ -409,12 +430,31 @@ class MainScene extends Phaser.Scene {
           duration: 200,
           ease: 'Linear'
         });
+        enemy.updateHealthBar(enemy.gridPos.x * this.tileSize + this.tileSize / 2, enemy.gridPos.y * this.tileSize + this.tileSize / 2);
       }
     }
   }
 
   private getDirectStep(x: number, y: number) {
     return { x: x + Math.sign(10 - x), y: y + Math.sign(10 - y) };
+  }
+
+  private tryOpenWall(enemy: Enemy) {
+    const directions = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }];
+    for (const direction of directions) {
+      const x = enemy.gridPos.x + direction.x;
+      const y = enemy.gridPos.y + direction.y;
+      if (x === 10 && y === 10) continue;
+      const node = this.map.grid[y]?.[x];
+      if (node && !node.isWalkable) {
+        this.map.setWalkable(x, y, true);
+        this.map.calculate([{ x: 10, y: 10 }]);
+        this.gridRects[y][x].setFillStyle(0x222222);
+        VisualFX.floatText(this, x * this.tileSize + this.tileSize / 2, y * this.tileSize + this.tileSize / 2, 'Muro abierto', '#fca5a5');
+        for (const tower of this.towers) tower.drawRange(this.map);
+        return;
+      }
+    }
   }
 
   private generateRandomObstacles(cols: number, rows: number, centerX: number, centerY: number) {

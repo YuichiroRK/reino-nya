@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { SacredGem } from './SacredGem';
 import { EnemyProfile } from '@td-nya/shared';
+import { HealthBar } from './HealthBar';
 
 export class Enemy {
   public sprite: Phaser.GameObjects.Rectangle;
@@ -12,10 +13,11 @@ export class Enemy {
   public readonly profile: EnemyProfile;
   public attackDamage: number;
   public targetGemIndex: number;
-  private readonly onDefeated?: (reward: number) => void;
+  private readonly onDefeated?: (reward: number, x: number, y: number) => void;
+  private readonly healthBar: HealthBar;
   private lastGemAttack = 0;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, profile: EnemyProfile, targetGemIndex = 0, difficulty = 1, onDefeated?: (reward: number) => void) {
+  constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, profile: EnemyProfile, targetGemIndex = 0, difficulty = 1, onDefeated?: (reward: number, x: number, y: number) => void) {
     this.profile = profile;
     this.gridPos = { x, y };
     this.maxHp = profile.maxHp * difficulty;
@@ -33,12 +35,15 @@ export class Enemy {
       tileSize * 0.6,
       profile.color
     );
+    this.healthBar = new HealthBar(scene, 24);
+    this.updateHealthBar();
   }
 
   takeDamage(amount: number) {
     if (!this.isActive) return;
     
     this.hp -= Math.max(1, amount - (this.profile.defense ?? 0));
+    this.updateHealthBar();
     
     // Feedback visual (parpadeo blanco)
     const scene = this.sprite.scene;
@@ -58,8 +63,13 @@ export class Enemy {
 
   die() {
     this.isActive = false;
-    this.onDefeated?.(this.profile.reward);
+    this.onDefeated?.(this.profile.reward, this.sprite.x, this.sprite.y);
     this.sprite.destroy();
+    this.healthBar.destroy();
+  }
+
+  updateHealthBar(x = this.sprite.x, y = this.sprite.y) {
+    this.healthBar.update(x, y - 20, this.hp, this.maxHp, 0xef4444);
   }
 
   attackGem(gem: SacredGem, time: number) {
