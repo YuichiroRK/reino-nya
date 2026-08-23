@@ -67,6 +67,7 @@ class MainScene extends Phaser.Scene {
   private uiHud!: HTMLElement;
   private uiHudToggle!: HTMLButtonElement;
   private uiWaveButton!: HTMLButtonElement;
+  private uiThemeButton!: HTMLButtonElement;
   private uiCoins!: HTMLElement;
   private uiSkills!: HTMLElement;
   private uiSkillInfo!: HTMLElement;
@@ -266,10 +267,13 @@ class MainScene extends Phaser.Scene {
     this.uiHud = document.getElementById('game-status')!;
     this.uiHudToggle = document.getElementById('hud-toggle') as HTMLButtonElement;
     this.uiWaveButton = document.getElementById('wave-button') as HTMLButtonElement;
+    this.uiThemeButton = document.getElementById('theme-toggle') as HTMLButtonElement;
     this.uiWaveButton.disabled = false;
     this.uiCoins = document.getElementById('coin-status')!;
     this.uiSkills = document.getElementById('skill-status')!;
     this.uiSkillInfo = document.getElementById('skill-info')!;
+    if (localStorage.getItem('td-nya-theme') === 'light') document.body.classList.add('light-theme');
+    this.updateThemeButton();
     this.uiSkillModal = document.getElementById('skill-detail-modal')!;
     this.uiSkillDetailTitle = document.getElementById('skill-detail-title')!;
     this.uiSkillDetailType = document.getElementById('skill-detail-type')!;
@@ -297,6 +301,11 @@ class MainScene extends Phaser.Scene {
       this.uiWaveButton.innerText = this.isPaused ? 'Continuar' : 'Pausar';
       this.uiGameState.innerText = this.isPaused ? 'PAUSADO' : 'EN JUEGO';
       this.uiGameState.style.color = this.isPaused ? '#fcd34d' : '#a7f3d0';
+    });
+    this.uiThemeButton.addEventListener('click', () => {
+      document.body.classList.toggle('light-theme');
+      localStorage.setItem('td-nya-theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+      this.updateThemeButton();
     });
     this.uiDifficulty.addEventListener('change', () => {
       this.difficultyMultiplier = Number(this.uiDifficulty.value);
@@ -493,6 +502,10 @@ class MainScene extends Phaser.Scene {
       ? `Cooldown: ${(skill.cooldownMs ?? 0) / 1000}s · Se activa automáticamente durante el combate.`
       : 'Se activa automáticamente cuando se cumple su condición.';
     this.uiSkillModal.classList.add('visible');
+  }
+
+  private updateThemeButton() {
+    if (this.uiThemeButton) this.uiThemeButton.innerText = document.body.classList.contains('light-theme') ? '☀' : '☾';
   }
 
   closeUIPanel() {
