@@ -89,7 +89,7 @@ export class Tower {
           break;
         }
 
-        if (!map.grid[gy][gx].isWalkable) {
+        if (!map.grid[gy][gx].isWalkable && !(gx === this.gridPos.x && gy === this.gridPos.y)) {
           // Stop just before the wall cell edge
           hit = Math.max(0, dist - this.tileSize * 0.5);
           break;
@@ -153,7 +153,7 @@ export class Tower {
     let err = dx - dy;
 
     while (true) {
-      if (map.grid[y0] && map.grid[y0][x0] && !map.grid[y0][x0].isWalkable) return false;
+      if (!(x0 === this.gridPos.x && y0 === this.gridPos.y) && map.grid[y0] && map.grid[y0][x0] && !map.grid[y0][x0].isWalkable) return false;
       if (x0 === x1 && y0 === y1) break;
       let e2 = 2 * err;
       if (e2 > -dy) { err -= dy; x0 += sx; }

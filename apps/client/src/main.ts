@@ -40,6 +40,7 @@ class MainScene extends Phaser.Scene {
   private uiCloseBtn!: HTMLButtonElement;
   private uiRemoveBtn!: HTMLButtonElement;
   private uiTowerLimit!: HTMLElement;
+  private uiTowerPrice!: HTMLElement;
   private uiWaveStatus!: HTMLElement;
   private uiGemStatus!: HTMLElement;
   private uiWaveProgress!: HTMLElement;
@@ -114,7 +115,7 @@ class MainScene extends Phaser.Scene {
           if (this.activeTool === 'tower') {
             const cellKey = `${x},${y}`;
             // Fix #2: block if occupied by another tower
-            if (this.map.grid[y][x].isWalkable && !(x === 10 && y === 10) && !this.occupiedCells.has(cellKey) && this.canPlaceCharacter(this.selectedCharacter) && this.coins >= this.getTowerCost(this.selectedCharacter)) {
+            if (!(x === 10 && y === 10) && !this.occupiedCells.has(cellKey) && this.canPlaceCharacter(this.selectedCharacter) && this.coins >= this.getTowerCost(this.selectedCharacter)) {
               const tower = new Tower(this, x, y, this.tileSize, this.selectedCharacter, (t) => this.openUIPanel(t));
               // Fix #3: draw LoS range immediately
               tower.drawRange(this.map);
@@ -183,6 +184,7 @@ class MainScene extends Phaser.Scene {
     this.uiCloseBtn = document.getElementById('close-panel') as HTMLButtonElement;
     this.uiRemoveBtn = document.getElementById('remove-tower') as HTMLButtonElement;
     this.uiTowerLimit = document.getElementById('tower-limit')!;
+    this.uiTowerPrice = document.getElementById('tower-price')!;
     this.uiWaveStatus = document.getElementById('wave-status')!;
     this.uiGemStatus = document.getElementById('gem-status')!;
     this.uiWaveProgress = document.getElementById('wave-progress')!;
@@ -320,6 +322,7 @@ class MainScene extends Phaser.Scene {
     if (!this.uiTowerLimit) return;
     const current = this.towers.filter(tower => tower.profile.id === this.selectedCharacter.id).length;
     this.uiTowerLimit.innerText = `${this.selectedCharacter.name}: ${current}/${this.getTowerLimit(this.selectedCharacter.rarity)}`;
+    this.uiTowerPrice.innerText = `Coste: ${this.getTowerCost(this.selectedCharacter)} monedas`;
   }
 
   private removeSelectedTower() {

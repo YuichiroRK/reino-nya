@@ -49,8 +49,7 @@
     #test-toolbar {
       position: absolute;
       top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
+      left: 20px;
       background: var(--surface-color);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -58,9 +57,12 @@
       border-radius: 30px;
       padding: 10px 20px;
       display: flex;
+      flex-direction: column;
       gap: 15px;
       z-index: 10;
       box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      width: 225px;
+      box-sizing: border-box;
     }
 
     .tool-btn {
@@ -98,6 +100,8 @@
     #char-select-wrapper.visible {
       max-width: 220px;
       opacity: 1;
+      display: grid;
+      gap: 7px;
     }
 
     #char-select {
@@ -110,6 +114,7 @@
       outline: none;
       cursor: pointer;
       white-space: nowrap;
+      width: 100%;
     }
     
     #char-select:focus {
@@ -192,12 +197,20 @@
       text-align: center;
     }
 
+    #tower-price {
+      margin: 0;
+      color: #fcd34d;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
     #game-status {
       position: absolute;
       top: 20px;
-      left: 20px;
+      left: 265px;
       z-index: 10;
-      width: 255px;
+      width: 220px;
       padding: 14px;
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 14px;
@@ -247,7 +260,7 @@
 
     @media (max-width: 700px) {
       #game-status { top: 10px; left: 10px; width: 205px; padding: 10px; }
-      #test-toolbar { top: auto; bottom: 10px; left: 10px; transform: none; width: calc(100vw - 20px); padding: 7px 10px; gap: 6px; flex-wrap: wrap; justify-content: center; box-sizing: border-box; }
+      #test-toolbar { top: auto; bottom: 10px; left: 10px; width: calc(100vw - 20px); padding: 7px 10px; gap: 6px; flex-direction: row; flex-wrap: wrap; justify-content: center; box-sizing: border-box; }
       .tool-btn { min-height: 38px; padding: 7px 9px; font-size: 0.75rem; }
       #char-select-wrapper.visible { max-width: 100%; flex-basis: 100%; order: 3; justify-content: center; }
       #char-select { width: min(100%, 260px); min-height: 38px; }
@@ -272,16 +285,16 @@
     <button class="tool-btn active" data-tool="tower">🗼 Torre</button>
     <div id="char-select-wrapper" class="visible">
       <select id="char-select">
-        <option value="angel">👑 Angel (SSR)</option>
-        <option value="tribu">🐱 Tribu (SSR)</option>
-        <option value="gretch">🌸 Gretch (SSR)</option>
-        <option value="kiu">🎯 Kiu (SR)</option>
-        <option value="lucy">🦋 Lucy (SR)</option>
-        <option value="cesar">⚔️ Cesar (R)</option>
+        <option value="angel">👑 Angel (SSR) · 250</option>
+        <option value="tribu">🐱 Tribu (SSR) · 250</option>
+        <option value="gretch">🌸 Gretch (SSR) · 250</option>
+        <option value="kiu">🎯 Kiu (SR) · 150</option>
+        <option value="lucy">🦋 Lucy (SR) · 150</option>
+        <option value="cesar">⚔️ Cesar (R) · 75</option>
       </select>
-      <p id="tower-limit">Torres: 0/6</p>
+      <p id="tower-price">Coste: 250 monedas</p>
+      <p id="tower-limit">Angel: 0/1</p>
     </div>
-    <button class="tool-btn" data-tool="wall">🧱 Muro</button>
   </div>
 
   <div id="ui-panel">
