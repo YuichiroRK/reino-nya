@@ -13,4 +13,8 @@ export const GameConstants = {
 
 export * from './characters/angel';
 export * from './characters/lucy';
+export * from './characters/tribu';
+export * from './characters/kiu';
+export * from './characters/gretch';
+export * from './characters/cesar';
 export * from './pathfinding/DijkstraMap';

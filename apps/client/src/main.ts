@@ -8,7 +8,9 @@ class MainScene extends Phaser.Scene {
   private map!: DijkstraMap;
   private enemies: Enemy[] = [];
   private towers: Tower[] = [];
+  private gridRects: Phaser.GameObjects.Rectangle[][] = [];
   private tileSize = 32;
+  private activeTool: 'tower' | 'wall' = 'tower';
   
   // Referencias a la UI HTML
   private selectedTower: Tower | null = null;
@@ -36,21 +38,23 @@ class MainScene extends Phaser.Scene {
 
     this.map.calculate([{ x: centerX, y: centerY }]);
 
-    // Dibujar grid
+    // Dibujar grid interactivo
     for (let y = 0; y < rows; y++) {
+      this.gridRects[y] = [];
       for (let x = 0; x < cols; x++) {
         const node = this.map.grid[y][x];
         let color = 0x222222;
         if (!node.isWalkable) color = 0x888888;
         else if (x === centerX && y === centerY) color = 0x00ff00;
 
-        this.add.rectangle(
+        const rect = this.add.rectangle(
           x * this.tileSize + this.tileSize / 2, 
           y * this.tileSize + this.tileSize / 2, 
           this.tileSize - 2, 
           this.tileSize - 2, 
           color
         );
+        this.gridRects[y][x] = rect;
       }
     }
 
@@ -67,18 +71,29 @@ class MainScene extends Phaser.Scene {
       const x = Math.floor(pointer.x / this.tileSize);
       const y = Math.floor(pointer.y / this.tileSize);
 
-      if (x >= 0 && x < cols && y >= 0 && y < rows && this.map.grid[y][x].isWalkable) {
+      if (x >= 0 && x < cols && y >= 0 && y < rows) {
         if (pointer.rightButtonDown()) {
-          // Spawnear Torre (Angel como prototipo)
-          const tower = new Tower(this, x, y, this.tileSize, Angel, (t) => this.openUIPanel(t));
-          this.towers.push(tower);
+          // Usar Herramienta Activa
+          if (this.activeTool === 'tower') {
+            if (this.map.grid[y][x].isWalkable && !(x === 10 && y === 10)) {
+              const tower = new Tower(this, x, y, this.tileSize, Angel, (t) => this.openUIPanel(t));
+              this.towers.push(tower);
+            }
+          } else if (this.activeTool === 'wall') {
+            if (!(x === 10 && y === 10)) {
+              this.toggleWall(x, y);
+            }
+          }
         } else {
-          // Spawnear Enemigo
-          const enemy = new Enemy(this, x, y, this.tileSize);
-          this.enemies.push(enemy);
+          // Click Izquierdo: Solo spawnear si es caminable
+          if (this.map.grid[y][x].isWalkable) {
+            const enemy = new Enemy(this, x, y, this.tileSize);
+            this.enemies.push(enemy);
+          } else {
+            this.closeUIPanel();
+          }
         }
       } else {
-        // Cerrar panel si se hace click en un lugar inválido (ej. muro)
         this.closeUIPanel();
       }
     });
@@ -90,8 +105,8 @@ class MainScene extends Phaser.Scene {
       loop: true
     });
 
-    this.add.text(10, rows * this.tileSize + 10, 'Prueba Visual de Combate', { fontSize: '20px', color: '#ffffff' });
-    this.add.text(10, rows * this.tileSize + 35, 'Click Izq: Spawnear Enemigo | Click Der: Spawnear Torre (Angel)', { fontSize: '14px', color: '#aaaaaa' });
+    this.add.text(10, rows * this.tileSize + 10, 'Prueba Visual de Combate y Muros', { fontSize: '20px', color: '#ffffff' });
+    this.add.text(10, rows * this.tileSize + 35, 'Click Izq: Crear Enemigo | Click Der: Usar Herramienta', { fontSize: '14px', color: '#aaaaaa' });
 
     this.setupHTMLUI();
   }
@@ -118,6 +133,30 @@ class MainScene extends Phaser.Scene {
         this.selectedTower.targetingPriority = val as TargetingPriority;
       }
     });
+
+    // Toolbar logic
+    const toolBtns = document.querySelectorAll('.tool-btn');
+    toolBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        toolBtns.forEach(b => b.classList.remove('active'));
+        const target = e.currentTarget as HTMLElement;
+        target.classList.add('active');
+        this.activeTool = target.dataset.tool as 'tower' | 'wall';
+      });
+    });
+  }
+
+  toggleWall(x: number, y: number) {
+    const node = this.map.grid[y][x];
+    const isNowWalkable = !node.isWalkable;
+    
+    this.map.setWalkable(x, y, isNowWalkable);
+    
+    // Recalcular mapa
+    this.map.calculate([{ x: 10, y: 10 }]);
+    
+    // Actualizar visual
+    this.gridRects[y][x].setFillStyle(isNowWalkable ? 0x222222 : 0x888888);
   }
 
   openUIPanel(tower: Tower) {

@@ -11,10 +11,12 @@ export class Tower {
   
   private lastFiredTime: number = 0;
   private scene: Phaser.Scene;
+  private gridPos: { x: number; y: number };
 
   constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, profile: CharacterProfile, onClick: (t: Tower) => void) {
     this.scene = scene;
     this.profile = profile;
+    this.gridPos = { x, y };
 
     // Draw range
     this.rangeCircle = scene.add.circle(
@@ -50,11 +52,14 @@ export class Tower {
       return;
     }
 
-    // Filter enemies in range
+    // Filter enemies in range AND in Line of Sight
     const inRange = enemies.filter(e => {
       if (!e.isActive) return false;
       const dist = Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, e.sprite.x, e.sprite.y);
-      return dist <= this.profile.baseStats.range;
+      if (dist > this.profile.baseStats.range) return false;
+      
+      // Check Line of Sight using Bresenham
+      return this.hasLineOfSight(this.gridPos.x, this.gridPos.y, e.gridPos.x, e.gridPos.y, map);
     });
 
     if (inRange.length === 0) return;
@@ -66,6 +71,25 @@ export class Tower {
       this.fire(target);
       this.lastFiredTime = time;
     }
+  }
+
+  private hasLineOfSight(x0: number, y0: number, x1: number, y1: number, map: DijkstraMap): boolean {
+    let dx = Math.abs(x1 - x0);
+    let dy = Math.abs(y1 - y0);
+    let sx = (x0 < x1) ? 1 : -1;
+    let sy = (y0 < y1) ? 1 : -1;
+    let err = dx - dy;
+
+    while (true) {
+      if (map.grid[y0] && map.grid[y0][x0] && !map.grid[y0][x0].isWalkable) {
+        return false; // Choca con un muro
+      }
+      if (x0 === x1 && y0 === y1) break;
+      let e2 = 2 * err;
+      if (e2 > -dy) { err -= dy; x0 += sx; }
+      if (e2 < dx) { err += dx; y0 += sy; }
+    }
+    return true;
   }
 
   private selectTarget(enemies: Enemy[], map: DijkstraMap): Enemy {
