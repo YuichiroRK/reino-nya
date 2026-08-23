@@ -11,9 +11,9 @@ export class SacredGem {
   private readonly shieldBar: HealthBar;
   private readonly healthBar: HealthBar;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, index: number) {
-    const px = x * tileSize + tileSize / 2;
-    const py = y * tileSize + tileSize / 2;
+  constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, index: number, origin = { x: 0, y: 0 }) {
+    const px = origin.x + x * tileSize + tileSize / 2;
+    const py = origin.y + y * tileSize + tileSize / 2;
     const crystal = scene.add.polygon(0, 0, [0, -12, 10, 0, 0, 12, -10, 0], 0x80deea);
     const label = scene.add.text(0, -24, `J${index + 1}`, { fontSize: '10px', color: '#ffffff' }).setOrigin(0.5);
     this.sprite = scene.add.container(px, py, [crystal, label]);

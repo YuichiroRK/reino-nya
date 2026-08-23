@@ -22,6 +22,7 @@ export class Tower {
   private lastFiredTime: number = 0;
   private scene: Phaser.Scene;
   private tileSize: number;
+  private origin: { x: number; y: number };
   private skillCooldowns = new Map<string, number>();
   private activeEffects = new Map<string, number>();
   private passiveReady = new Map<string, boolean>();
@@ -39,11 +40,12 @@ export class Tower {
   private readonly healthBar: HealthBar;
   private summons: MiniMosasaur[] = [];
 
-  constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, profile: CharacterProfile, onClick: (t: Tower) => void) {
+  constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, profile: CharacterProfile, onClick: (t: Tower) => void, origin = { x: 0, y: 0 }) {
     this.scene = scene;
     this.profile = profile;
     this.gridPos = { x, y };
     this.tileSize = tileSize;
+    this.origin = origin;
     this.maxHp = profile.baseStats.hp;
     this.hp = this.maxHp;
     this.healthBar = new HealthBar(scene, 28);
@@ -54,8 +56,8 @@ export class Tower {
     // Draw tower body (on top of range overlay)
     const spriteKey = profile.id === 'xavi' ? 'xavi-human-idle' : `${profile.id}-idle`;
     this.sprite = ['tribu', 'angel', 'xavi', 'gretch', 'kiu', 'lucy', 'cesar'].includes(profile.id)
-      ? scene.add.image(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, spriteKey).setDisplaySize(tileSize * (profile.id === 'angel' ? 1.1 : 0.9), tileSize * (profile.id === 'angel' ? 1.1 : 0.9))
-      : scene.add.rectangle(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, tileSize * 0.8, tileSize * 0.8, 0x4444ff);
+      ? scene.add.image(origin.x + x * tileSize + tileSize / 2, origin.y + y * tileSize + tileSize / 2, spriteKey).setDisplaySize(tileSize * (profile.id === 'angel' ? 1.1 : 0.9), tileSize * (profile.id === 'angel' ? 1.1 : 0.9))
+      : scene.add.rectangle(origin.x + x * tileSize + tileSize / 2, origin.y + y * tileSize + tileSize / 2, tileSize * 0.8, tileSize * 0.8, 0x4444ff);
     this.healthBar.update(this.sprite.x, this.sprite.y - 21, this.hp, this.maxHp, 0x22c55e);
 
     this.sprite.setInteractive({ useHandCursor: true });
@@ -75,8 +77,8 @@ export class Tower {
   drawRange(map: DijkstraMap) {
     this.rangeGraphics.clear();
 
-    const cx = this.gridPos.x * this.tileSize + this.tileSize / 2;
-    const cy = this.gridPos.y * this.tileSize + this.tileSize / 2;
+    const cx = this.origin.x + this.gridPos.x * this.tileSize + this.tileSize / 2;
+    const cy = this.origin.y + this.gridPos.y * this.tileSize + this.tileSize / 2;
     const maxRange = this.effectiveRange;
     const RAY_COUNT = 120; // smoothness
 
@@ -92,8 +94,8 @@ export class Tower {
       for (let dist = 0; dist <= maxRange; dist += this.tileSize * 0.5) {
         const px = cx + dx * dist;
         const py = cy + dy * dist;
-        const gx = Math.floor(px / this.tileSize);
-        const gy = Math.floor(py / this.tileSize);
+        const gx = Math.floor((px - this.origin.x) / this.tileSize);
+        const gy = Math.floor((py - this.origin.y) / this.tileSize);
 
         if (
           gy < 0 || gy >= map.grid.length ||

@@ -21,9 +21,11 @@ export class Enemy {
   private statuses = new Map<StatusEffectType, StatusEffect>();
   private lastStatusTick = 0;
   private lastMove = 0;
+  private origin: { x: number; y: number };
 
-  constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, profile: EnemyProfile, targetGemIndex = 0, difficulty = 1, onDefeated?: (reward: number, x: number, y: number) => void) {
+  constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, profile: EnemyProfile, targetGemIndex = 0, difficulty = 1, onDefeated?: (reward: number, x: number, y: number) => void, origin = { x: 0, y: 0 }) {
     this.profile = profile;
+    this.origin = origin;
     this.gridPos = { x, y };
     this.maxHp = profile.maxHp * difficulty;
     this.hp = this.maxHp;
@@ -34,8 +36,8 @@ export class Enemy {
     this.isActive = true;
 
     this.sprite = profile.id === 'pibble'
-      ? scene.add.image(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, 'pibble-idle').setDisplaySize(tileSize * 1.35, tileSize * 1.35)
-      : scene.add.rectangle(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, tileSize * 0.6, tileSize * 0.6, profile.color);
+      ? scene.add.image(origin.x + x * tileSize + tileSize / 2, origin.y + y * tileSize + tileSize / 2, 'pibble-idle').setDisplaySize(tileSize * 1.35, tileSize * 1.35)
+      : scene.add.rectangle(origin.x + x * tileSize + tileSize / 2, origin.y + y * tileSize + tileSize / 2, tileSize * 0.6, tileSize * 0.6, profile.color);
     this.healthBar = new HealthBar(scene, 24);
     this.updateHealthBar();
   }

@@ -25,6 +25,7 @@ class MainScene extends Phaser.Scene {
   private towers: Tower[] = [];
   private gridRects: Phaser.GameObjects.Rectangle[][] = [];
   private tileSize = 32;
+  private origin = { x: 0, y: 0 };
   private activeTool: 'tower' | 'wall' = 'tower';
   private selectedCharacter: CharacterProfile = Angel;
   private occupiedCells = new Set<string>(); // Fix #2: prevent tower stacking
@@ -112,6 +113,7 @@ class MainScene extends Phaser.Scene {
     this.load.image('xavi-human-idle', '/assets/characters/HumanXaviIdle.png');
     this.load.image('xavi-mosasaur-idle', '/assets/characters/MosasaurioXaviIdle.png');
     this.load.image('pibble-idle', '/assets/characters/PibbleIdle.png');
+    this.load.image('level1-map', '/assets/maps/Level1.png');
   }
 
   create() {
@@ -130,14 +132,17 @@ class MainScene extends Phaser.Scene {
 
     const cols = 20;
     const rows = 20;
-    this.tileSize = Math.min(40, Math.floor((this.scale.width - 16) / cols));
+    this.tileSize = Math.min(40, Math.floor((Math.min(this.scale.width, this.scale.height) - 16) / rows));
+    this.origin = { x: Math.floor((this.scale.width - cols * this.tileSize) / 2), y: Math.floor((this.scale.height - rows * this.tileSize) / 2) };
     
     this.map = new DijkstraMap(cols, rows);
+    const mapBackground = this.add.image(this.scale.width / 2, this.scale.height / 2, 'level1-map');
+    const mapScale = Math.max(this.scale.width / 1408, this.scale.height / 768);
+    mapBackground.setDisplaySize(1408 * mapScale, 768 * mapScale).setDepth(-10);
     const centerX = 10;
     const centerY = 10;
     
     this.createFortressDoors(centerX, centerY);
-    this.generateRandomObstacles(cols, rows, centerX, centerY);
 
     this.map.calculate([{ x: centerX, y: centerY }]);
 
@@ -151,20 +156,21 @@ class MainScene extends Phaser.Scene {
         else if (x === centerX && y === centerY) color = 0x00ff00;
 
         const rect = this.add.rectangle(
-          x * this.tileSize + this.tileSize / 2, 
-          y * this.tileSize + this.tileSize / 2, 
+          this.origin.x + x * this.tileSize + this.tileSize / 2, 
+          this.origin.y + y * this.tileSize + this.tileSize / 2, 
           this.tileSize - 2, 
           this.tileSize - 2, 
           color
         );
+        rect.setAlpha(node.isWalkable ? 0.08 : 0.35);
         this.gridRects[y][x] = rect;
       }
     }
 
     this.gems = [
-      new SacredGem(this, 9, 10, this.tileSize, 0),
-      new SacredGem(this, 11, 10, this.tileSize, 1),
-      new SacredGem(this, 10, 11, this.tileSize, 2),
+      new SacredGem(this, 9, 10, this.tileSize, 0, this.origin),
+      new SacredGem(this, 11, 10, this.tileSize, 1, this.origin),
+      new SacredGem(this, 10, 11, this.tileSize, 2, this.origin),
     ];
     for (const cell of this.doorCells) {
       const [x, y] = cell.split(',').map(Number);
@@ -181,8 +187,8 @@ class MainScene extends Phaser.Scene {
         return;
       }
 
-      const x = Math.floor(pointer.x / this.tileSize);
-      const y = Math.floor(pointer.y / this.tileSize);
+      const x = Math.floor((pointer.x - this.origin.x) / this.tileSize);
+      const y = Math.floor((pointer.y - this.origin.y) / this.tileSize);
 
       const clickedTower = this.towers.find(tower => tower.sprite.getBounds().contains(pointer.x, pointer.y));
       if (clickedTower) {
@@ -202,7 +208,7 @@ class MainScene extends Phaser.Scene {
             const cellKey = `${x},${y}`;
             // Fix #2: block if occupied by another tower
             if (!(x === 10 && y === 10) && !this.occupiedCells.has(cellKey) && this.canPlaceCharacter(this.selectedCharacter) && this.auraPoints >= this.getTowerCost(this.selectedCharacter)) {
-              const tower = new Tower(this, x, y, this.tileSize, this.selectedCharacter, (t) => this.openUIPanel(t));
+              const tower = new Tower(this, x, y, this.tileSize, this.selectedCharacter, (t) => this.openUIPanel(t), this.origin);
               tower.globalLevel = this.characterProgression.get(this.selectedCharacter.id).level;
               // Fix #3: draw LoS range immediately
               tower.drawRange(this.map);
@@ -220,7 +226,7 @@ class MainScene extends Phaser.Scene {
         } else {
           // Click Izquierdo: Solo spawnear si es caminable
           if (this.map.grid[y][x].isWalkable) {
-            const enemy = new Enemy(this, x, y, this.tileSize, EnemyData[this.selectedEnemyId] ?? EnemyData.basic);
+            const enemy = new Enemy(this, x, y, this.tileSize, EnemyData[this.selectedEnemyId] ?? EnemyData.basic, 0, 1, undefined, this.origin);
             this.enemies.push(enemy);
           } else {
             this.closeUIPanel();
@@ -722,7 +728,7 @@ class MainScene extends Phaser.Scene {
           this.progression.addExperience(reward);
           for (const tower of this.towers) this.characterProgression.addExperience(tower.profile.id, Math.max(1, Math.floor(reward / 5)));
       VisualFX.floatText(this, x, y, `+${reward}`, '#fcd34d');
-    }));
+        }, this.origin));
   }
 
   private updateGameStatus() {
@@ -804,12 +810,12 @@ class MainScene extends Phaser.Scene {
 
         this.tweens.add({
           targets: enemy.sprite,
-          x: enemy.gridPos.x * this.tileSize + this.tileSize / 2,
-          y: enemy.gridPos.y * this.tileSize + this.tileSize / 2,
+          x: this.origin.x + enemy.gridPos.x * this.tileSize + this.tileSize / 2,
+          y: this.origin.y + enemy.gridPos.y * this.tileSize + this.tileSize / 2,
           duration: 200,
           ease: 'Linear'
         });
-        enemy.updateHealthBar(enemy.gridPos.x * this.tileSize + this.tileSize / 2, enemy.gridPos.y * this.tileSize + this.tileSize / 2);
+        enemy.updateHealthBar(this.origin.x + enemy.gridPos.x * this.tileSize + this.tileSize / 2, this.origin.y + enemy.gridPos.y * this.tileSize + this.tileSize / 2);
       }
     }
   }
