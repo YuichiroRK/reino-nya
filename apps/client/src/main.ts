@@ -238,9 +238,6 @@ class MainScene extends Phaser.Scene {
       loop: true
     });
 
-    this.add.text(10, rows * this.tileSize + 10, 'Prueba Visual de Combate y Muros', { fontSize: '20px', color: '#ffffff' });
-    this.add.text(10, rows * this.tileSize + 35, 'Click Izq: Crear Enemigo | Click Der: Usar Herramienta', { fontSize: '14px', color: '#aaaaaa' });
-
     this.setupHTMLUI();
   }
 
