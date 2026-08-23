@@ -233,7 +233,7 @@
     #upgrade-tower:hover:not(:disabled) { background: rgba(250, 204, 21, 0.28); }
     #upgrade-tower:disabled { cursor: not-allowed; opacity: 0.45; }
     #upgrade-info { margin: 0 0 8px; color: #fcd34d; font-size: 0.75rem; }
-    .upgrade-paths { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+    .upgrade-paths { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
     .upgrade-paths button { padding: 7px 3px; border: 1px solid var(--ui-border); border-radius: 6px; background: var(--ui-card); color: var(--ui-text); cursor: pointer; font-size: 0.68rem; }
     .upgrade-paths button:hover:not(:disabled) { border-color: var(--primary-color); }
     .upgrade-paths button:disabled { cursor: not-allowed; opacity: 0.45; }
@@ -534,7 +534,7 @@
       <label>Mejora dentro de partida</label>
       <p id="upgrade-info">Nivel 1 · 100 Aura Points</p>
       <button id="upgrade-tower">Mejorar torre</button>
-      <div class="upgrade-paths"><button id="upgrade-attack">Daño</button><button id="upgrade-speed">Velocidad</button><button id="upgrade-range">Rango</button></div>
+      <div class="upgrade-paths"><button id="upgrade-damage">Daño</button><button id="upgrade-speed">Velocidad</button><button id="upgrade-range">Rango</button><button id="upgrade-piercing">Piercing</button></div>
     </div>
     <button class="tower-only" id="remove-tower">Quitar torre</button>
   </div>

@@ -7,7 +7,7 @@ import { WaveSystem } from './systems/WaveSystem';
 import { VisualFX } from './effects/VisualFX';
 import { ProgressionSystem } from './systems/ProgressionSystem';
 import { CharacterProgressionSystem } from './systems/CharacterProgressionSystem';
-import { CharacterProfile, Rarity, SkillTargetPriority, TargetingPriority } from '@td-nya/shared';
+import { CharacterProfile, Rarity, SkillTargetPriority, TargetingPriority, UpgradePathId } from '@td-nya/shared';
 
 const CHARACTER_MAP: Record<string, CharacterProfile> = {
   angel: Angel,
@@ -72,7 +72,7 @@ class MainScene extends Phaser.Scene {
   private uiStartGameButton!: HTMLButtonElement;
   private uiCollectionScreen!: HTMLElement;
   private uiCollectionList!: HTMLElement;
-  private uiUpgradePaths!: Record<'attack' | 'speed' | 'range', HTMLButtonElement>;
+  private uiUpgradePaths!: Record<UpgradePathId, HTMLButtonElement>;
   private uiHud!: HTMLElement;
   private uiHudToggle!: HTMLButtonElement;
   private uiWaveButton!: HTMLButtonElement;
@@ -298,9 +298,10 @@ class MainScene extends Phaser.Scene {
     this.uiCollectionScreen = document.getElementById('collection-screen')!;
     this.uiCollectionList = document.getElementById('collection-list')!;
     this.uiUpgradePaths = {
-      attack: document.getElementById('upgrade-attack') as HTMLButtonElement,
+      damage: document.getElementById('upgrade-damage') as HTMLButtonElement,
       speed: document.getElementById('upgrade-speed') as HTMLButtonElement,
       range: document.getElementById('upgrade-range') as HTMLButtonElement,
+      piercing: document.getElementById('upgrade-piercing') as HTMLButtonElement,
     };
     this.uiEndScreen.classList.remove('visible');
     this.uiHud = document.getElementById('game-status')!;
@@ -568,12 +569,13 @@ class MainScene extends Phaser.Scene {
     this.uiUpgradeButton.disabled = tower.upgradeLevel >= 4 || this.auraPoints < tower.upgradeCost;
     (Object.keys(this.uiUpgradePaths) as Array<keyof typeof this.uiUpgradePaths>).forEach(path => {
       const level = tower.upgradePaths[path];
-      this.uiUpgradePaths[path].innerText = `${path === 'attack' ? 'Daño' : path === 'speed' ? 'Velocidad' : 'Rango'} ${level}/3`;
+      const label = path === 'damage' ? 'Daño' : path === 'speed' ? 'Velocidad' : path === 'range' ? 'Rango' : 'Piercing';
+      this.uiUpgradePaths[path].innerText = `${label} ${level}/3`;
       this.uiUpgradePaths[path].disabled = level >= 3 || this.auraPoints < tower.getPathCost(path);
     });
   }
 
-  private upgradeSelectedPath(path: 'attack' | 'speed' | 'range') {
+  private upgradeSelectedPath(path: UpgradePathId) {
     if (!this.selectedTower) return;
     const cost = this.selectedTower.getPathCost(path);
     if (this.auraPoints < cost || !this.selectedTower.upgradePath(path)) return;

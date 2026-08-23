@@ -20,4 +20,5 @@ export * from './characters/cesar';
 export * from './characters/xavi';
 export * from './enemies';
 export * from './levels';
+export * from './upgrades';
 export * from './pathfinding/DijkstraMap';

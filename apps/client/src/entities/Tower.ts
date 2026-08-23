@@ -9,6 +9,8 @@ import { TargetingSystem } from '../systems/TargetingSystem';
 import { HealthBar } from './HealthBar';
 import { Projectile } from './Projectile';
 import { MiniMosasaur } from './MiniMosasaur';
+import { UpgradePaths } from '@td-nya/game-data';
+import { UpgradePathId } from '@td-nya/shared';
 
 export class Tower {
   public profile: CharacterProfile;
@@ -32,7 +34,7 @@ export class Tower {
   public isActive = true;
   public upgradeLevel = 1;
   public globalLevel = 1;
-  public upgradePaths = { attack: 0, speed: 0, range: 0 };
+  public upgradePaths: Record<UpgradePathId, number> = { damage: 0, range: 0, speed: 0, piercing: 0 };
   public isTransformed = false;
   private readonly healthBar: HealthBar;
   private summons: MiniMosasaur[] = [];
@@ -139,7 +141,7 @@ export class Tower {
     for (const summon of this.summons) summon.update(time, enemies);
     this.updateSkills(time, enemies, map, towers);
     const speedBoost = towers.reduce((boost, tower) => boost + tower.getSpeedBoostFor(this, time), 0);
-    const fireCooldownMs = 1000 / (this.profile.baseStats.attackSpeed * this.upgradeLevel * (1 + speedBoost) * (1 + this.upgradePaths.speed * 0.12));
+    const fireCooldownMs = 1000 / (this.profile.baseStats.attackSpeed * this.upgradeLevel * (1 + speedBoost) * (1 + this.upgradeEffects.speedPercent));
     if (time - this.lastFiredTime < fireCooldownMs) return;
 
     const inRange = enemies.filter(e => {
@@ -204,12 +206,17 @@ export class Tower {
 
     const attackBoost = towers.reduce((boost, tower) => boost + tower.getAttackBoostFor(this, towers, map), 0);
     const globalMultiplier = 1 + (this.globalLevel - 1) * 0.03;
-    const damage = CombatSystem.calculateDamage(this.profile.baseStats.attack * this.upgradeLevel * globalMultiplier * (1 + this.upgradePaths.attack * 0.2), attackBoost, damageMultiplier);
+    const damage = CombatSystem.calculateDamage(this.profile.baseStats.attack * this.upgradeLevel * globalMultiplier * (1 + this.upgradeEffects.attackPercent), attackBoost, damageMultiplier);
     target.takeDamage(damage);
     if (aoeMultiplier > 1) {
       for (const enemy of enemies) {
         if (enemy !== target && enemy.isActive && this.isInRange(enemy)) enemy.takeDamage(damage * aoeMultiplier);
       }
+    }
+    const piercing = this.upgradeEffects.piercing;
+    if (piercing > 0) {
+      const extraTargets = enemies.filter(enemy => enemy !== target && enemy.isActive && this.isInRange(enemy)).slice(0, piercing);
+      for (const enemy of extraTargets) enemy.takeDamage(damage * 0.65);
     }
   }
 
@@ -253,7 +260,7 @@ export class Tower {
     if (skill.flavorText) VisualFX.floatText(this.scene, this.sprite.x, this.sprite.y, skill.flavorText, '#ffe082');
     VisualFX.ring(this.scene, this.sprite.x, this.sprite.y, skill.particleColor ?? 0xbb86fc, skill.effect.aoeMultiplier ? 70 : 42);
     VisualFX.burstParticles(this.scene, this.sprite.x, this.sprite.y, skill.particleColor ?? 0xbb86fc);
-    if (skill.effect.damageMultiplier && this.profile.id !== 'cesar') this.nextDamageMultiplier = skill.effect.damageMultiplier;
+    if (skill.effect.damageMultiplier && this.profile.id !== 'cesar') this.nextDamageMultiplier = skill.effect.damageMultiplier * (1 + this.upgradeEffects.skillPower);
     if (skill.id === 'mosasaur-era' && this.sprite instanceof Phaser.GameObjects.Image) {
       this.isTransformed = true;
       this.sprite.setTexture('xavi-mosasaur-idle').setDisplaySize(this.tileSize * 1.25, this.tileSize * 1.25);
@@ -269,7 +276,7 @@ export class Tower {
       const allies = this.getAllies(towers, map);
       const targets = this.skillTargetPriority === 'all' ? allies : [this.selectSkillAlly(allies)];
       for (const target of targets) if (target) {
-        target.heal(skill.effect.healAmount);
+        target.heal(skill.effect.healAmount * (1 + this.upgradeEffects.skillPower));
         VisualFX.ring(this.scene, target.sprite.x, target.sprite.y, 0x66bb6a, 30);
       }
     }
@@ -395,14 +402,28 @@ export class Tower {
   }
 
   get upgradeCost() { return 100 * this.upgradeLevel; }
-  get effectiveRange() { return this.profile.baseStats.range + this.upgradePaths.range * 25; }
+  get effectiveRange() { return this.profile.baseStats.range + this.upgradeEffects.range; }
 
-  getPathCost(path: keyof typeof this.upgradePaths) { return 80 + this.upgradePaths[path] * 80; }
+  getPathCost(path: UpgradePathId) { return UpgradePaths[path][this.upgradePaths[path]]?.cost ?? 0; }
 
-  upgradePath(path: keyof typeof this.upgradePaths) {
-    if (this.upgradePaths[path] >= 3) return false;
+  upgradePath(path: UpgradePathId) {
+    if (this.upgradePaths[path] >= UpgradePaths[path].length) return false;
     this.upgradePaths[path]++;
     return true;
+  }
+
+  private get upgradeEffects() {
+    const effects = { attackPercent: 0, speedPercent: 0, range: 0, skillPower: 0, piercing: 0 };
+    for (const path of Object.keys(this.upgradePaths) as UpgradePathId[]) {
+      for (const node of UpgradePaths[path].slice(0, this.upgradePaths[path])) {
+        effects.attackPercent += node.effect.attackPercent ?? 0;
+        effects.speedPercent += node.effect.speedPercent ?? 0;
+        effects.range += node.effect.range ?? 0;
+        effects.skillPower += node.effect.skillPower ?? 0;
+        effects.piercing += node.effect.piercing ?? 0;
+      }
+    }
+    return effects;
   }
 
   upgrade() {

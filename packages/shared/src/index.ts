@@ -98,6 +98,22 @@ export interface StatusEffect {
   value?: number;
 }
 
+export type UpgradePathId = 'damage' | 'range' | 'speed' | 'piercing';
+
+export interface UpgradeNode {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  effect: {
+    attackPercent?: number;
+    speedPercent?: number;
+    range?: number;
+    skillPower?: number;
+    piercing?: number;
+  };
+}
+
 export interface EnemyProfile {
   id: string;
   name: string;
