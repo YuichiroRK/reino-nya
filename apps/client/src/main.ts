@@ -304,7 +304,7 @@ class MainScene extends Phaser.Scene {
     this.uiGemBannerProgress = document.getElementById('gem-banner-progress')!;
     this.uiSkillModal.classList.remove('visible');
 
-    this.uiCloseBtn.onclick = () => this.closeUIPanel();
+    this.uiCloseBtn.onclick = () => this.minimizeUIPanel();
     this.uiRemoveBtn.addEventListener('click', () => this.removeSelectedTower());
     this.uiWaveButton.addEventListener('click', () => {
       if (this.isPaused) {
@@ -344,8 +344,8 @@ class MainScene extends Phaser.Scene {
       this.uiMinimizeToolbar.innerText = minimized ? '+' : '−';
     };
     this.uiMinimizePanel.onclick = () => {
-      const minimized = this.uiPanel.classList.toggle('minimized');
-      this.uiMinimizePanel.innerText = minimized ? '+' : '−';
+      if (this.uiPanel.classList.contains('minimized')) this.restoreUIPanel();
+      else this.minimizeUIPanel();
     };
     this.uiSkills.addEventListener('click', event => {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-skill-id]');
@@ -558,8 +558,25 @@ class MainScene extends Phaser.Scene {
   closeUIPanel() {
     this.selectedTower = null;
     this.selectedEnemy = null;
-    this.uiPanel.classList.remove('enemy-selected', 'minimized');
-    this.uiPanel.classList.remove('active');
+    this.uiPanel.classList.remove('active', 'enemy-selected', 'minimized', 'has-portrait');
+    this.uiSkillInfo.classList.remove('visible');
+    this.uiSkillModal.classList.remove('visible');
+  }
+
+  private minimizeUIPanel() {
+    this.selectedTower = null;
+    this.selectedEnemy = null;
+    this.uiPanel.classList.remove('enemy-selected', 'has-portrait');
+    this.uiSkillInfo.classList.remove('visible');
+    this.uiSkillModal.classList.remove('visible');
+    this.uiPanel.classList.add('active', 'minimized');
+    this.uiMinimizePanel.innerText = '+';
+  }
+
+  private restoreUIPanel() {
+    this.uiPanel.classList.remove('minimized');
+    this.uiMinimizePanel.innerText = '−';
+    this.uiPanel.classList.add('active');
   }
 
   private getTowerLimit(rarity: Rarity) {
