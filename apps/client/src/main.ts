@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { DijkstraMap, Angel, Lucy, Tribu, Kiu, Gretch, Cesar } from '@td-nya/game-data';
 import { Enemy } from './entities/Enemy';
 import { Tower } from './entities/Tower';
+import { SacredGem } from './entities/SacredGem';
+import { WaveSystem } from './systems/WaveSystem';
 import { CharacterProfile, Rarity, TargetingPriority } from '@td-nya/shared';
 
 const CHARACTER_MAP: Record<string, CharacterProfile> = {
@@ -22,6 +24,9 @@ class MainScene extends Phaser.Scene {
   private activeTool: 'tower' | 'wall' = 'tower';
   private selectedCharacter: CharacterProfile = Angel;
   private occupiedCells = new Set<string>(); // Fix #2: prevent tower stacking
+  private gems: SacredGem[] = [];
+  private waveSystem = new WaveSystem();
+  private gameState: 'playing' | 'victory' | 'defeat' = 'playing';
   
   // Referencias a la UI HTML
   private selectedTower: Tower | null = null;
@@ -32,6 +37,8 @@ class MainScene extends Phaser.Scene {
   private uiCloseBtn!: HTMLButtonElement;
   private uiRemoveBtn!: HTMLButtonElement;
   private uiTowerLimit!: HTMLElement;
+  private uiWaveStatus!: HTMLElement;
+  private uiGemStatus!: HTMLElement;
 
   constructor() {
     super({ key: 'MainScene' });
@@ -70,6 +77,12 @@ class MainScene extends Phaser.Scene {
         this.gridRects[y][x] = rect;
       }
     }
+
+    this.gems = [
+      new SacredGem(this, 9, 10, this.tileSize, 0),
+      new SacredGem(this, 11, 10, this.tileSize, 1),
+      new SacredGem(this, 10, 11, this.tileSize, 2),
+    ];
 
     // Prevenir el menú contextual del navegador en click derecho
     this.input.mouse!.disableContextMenu();
@@ -131,10 +144,15 @@ class MainScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number) {
+    if (this.gameState !== 'playing') return;
+    this.waveSystem.update(time, this.enemies.filter(enemy => enemy.isActive).length, (wave, count) => this.spawnWave(wave, count));
     // Ciclo de combate
     for (const tower of this.towers) {
       tower.update(time, this.enemies, this.map, this.towers);
     }
+    this.updateGameStatus();
+    if (this.gems.every(gem => gem.isDestroyed)) this.endGame('defeat');
+    else if (this.waveSystem.wave >= this.waveSystem.maxWaves && this.enemies.every(enemy => !enemy.isActive)) this.endGame('victory');
   }
 
   setupHTMLUI() {
@@ -145,6 +163,8 @@ class MainScene extends Phaser.Scene {
     this.uiCloseBtn = document.getElementById('close-panel') as HTMLButtonElement;
     this.uiRemoveBtn = document.getElementById('remove-tower') as HTMLButtonElement;
     this.uiTowerLimit = document.getElementById('tower-limit')!;
+    this.uiWaveStatus = document.getElementById('wave-status')!;
+    this.uiGemStatus = document.getElementById('gem-status')!;
 
     this.uiCloseBtn.addEventListener('click', () => this.closeUIPanel());
     this.uiRemoveBtn.addEventListener('click', () => this.removeSelectedTower());
@@ -249,12 +269,43 @@ class MainScene extends Phaser.Scene {
     this.updateTowerLimit();
   }
 
+  private spawnWave(wave: number, count: number) {
+    const spawnPoints = [{ x: 0, y: 0 }, { x: 19, y: 0 }, { x: 0, y: 19 }, { x: 19, y: 19 }, { x: 10, y: 0 }, { x: 19, y: 10 }, { x: 0, y: 10 }];
+    for (let index = 0; index < count; index++) {
+      const point = spawnPoints[index % spawnPoints.length];
+      const enemy = new Enemy(this, point.x, point.y, this.tileSize);
+      enemy.maxHp = 100 + wave * 30;
+      enemy.hp = enemy.maxHp;
+      enemy.attackDamage = 10 + wave * 2;
+      this.enemies.push(enemy);
+    }
+  }
+
+  private updateGameStatus() {
+    const aliveGems = this.gems.filter(gem => !gem.isDestroyed).length;
+    this.uiWaveStatus.innerText = `Oleada: ${this.waveSystem.wave}/${this.waveSystem.maxWaves}`;
+    this.uiGemStatus.innerText = `Joyas: ${aliveGems}/3`;
+  }
+
+  private endGame(state: 'victory' | 'defeat') {
+    this.gameState = state;
+    const message = state === 'victory' ? '¡VICTORIA! Todas las oleadas superadas' : 'DERROTA: Las tres joyas fueron destruidas';
+    this.add.text(this.scale.width / 2, this.scale.height / 2, message, {
+      fontSize: '26px', color: state === 'victory' ? '#a5d6a7' : '#ef9a9a',
+      backgroundColor: '#121212', padding: { x: 18, y: 12 },
+    }).setOrigin(0.5).setDepth(20);
+  }
+
   moveEnemies() {
     // Limpiar enemigos muertos
     this.enemies = this.enemies.filter(e => e.isActive);
 
     for (const enemy of this.enemies) {
-      if (enemy.gridPos.x === 10 && enemy.gridPos.y === 10) continue;
+      if (enemy.gridPos.x === 10 && enemy.gridPos.y === 10) {
+        const gem = this.gems.find(candidate => !candidate.isDestroyed);
+        if (gem) enemy.attackGem(gem, this.time.now);
+        continue;
+      }
 
       const nextNode = this.map.getNextStep(enemy.gridPos.x, enemy.gridPos.y);
 

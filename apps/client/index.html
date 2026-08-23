@@ -191,10 +191,26 @@
       font-size: 0.75rem;
       text-align: center;
     }
+
+    #game-status {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: var(--surface-color);
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
   <div id="game-container"></div>
+  <div id="game-status">
+    <div id="wave-status">Oleada: 0/5</div>
+    <div id="gem-status">Joyas: 3/3</div>
+  </div>
   
   <div id="test-toolbar">
     <button class="tool-btn active" data-tool="tower">🗼 Torre</button>

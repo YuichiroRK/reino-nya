@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { SacredGem } from './SacredGem';
 
 export class Enemy {
   public sprite: Phaser.GameObjects.Rectangle;
@@ -7,6 +8,8 @@ export class Enemy {
   public maxHp: number;
   public speed: number;
   public isActive: boolean;
+  public attackDamage = 10;
+  private lastGemAttack = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number) {
     this.gridPos = { x, y };
@@ -48,5 +51,11 @@ export class Enemy {
   die() {
     this.isActive = false;
     this.sprite.destroy();
+  }
+
+  attackGem(gem: SacredGem, time: number) {
+    if (time - this.lastGemAttack < 1000) return;
+    gem.takeDamage(this.attackDamage);
+    this.lastGemAttack = time;
   }
 }
