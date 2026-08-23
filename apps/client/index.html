@@ -247,8 +247,10 @@
 
     @media (max-width: 700px) {
       #game-status { top: 10px; left: 10px; width: 205px; padding: 10px; }
-      #test-toolbar { top: auto; bottom: 10px; width: calc(100vw - 20px); padding: 7px 10px; gap: 6px; justify-content: center; }
-      .tool-btn { padding: 7px 9px; font-size: 0.75rem; }
+      #test-toolbar { top: auto; bottom: 10px; left: 10px; transform: none; width: calc(100vw - 20px); padding: 7px 10px; gap: 6px; flex-wrap: wrap; justify-content: center; box-sizing: border-box; }
+      .tool-btn { min-height: 38px; padding: 7px 9px; font-size: 0.75rem; }
+      #char-select-wrapper.visible { max-width: 100%; flex-basis: 100%; order: 3; justify-content: center; }
+      #char-select { width: min(100%, 260px); min-height: 38px; }
       #ui-panel { top: auto; right: 10px; bottom: 65px; width: min(290px, calc(100vw - 20px)); }
     }
   </style>

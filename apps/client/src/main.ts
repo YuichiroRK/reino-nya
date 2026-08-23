@@ -59,14 +59,13 @@ class MainScene extends Phaser.Scene {
   create() {
     const cols = 20;
     const rows = 20;
+    this.tileSize = Math.min(32, Math.floor((window.innerWidth - 16) / cols));
     
     this.map = new DijkstraMap(cols, rows);
     const centerX = 10;
     const centerY = 10;
     
-    // Muralla L
-    for (let y = 5; y <= 15; y++) this.map.setWalkable(7, y, false);
-    for (let x = 3; x <= 7; x++) this.map.setWalkable(x, 15, false);
+    this.generateRandomObstacles(cols, rows, centerX, centerY);
 
     this.map.calculate([{ x: centerX, y: centerY }]);
 
@@ -407,6 +406,24 @@ class MainScene extends Phaser.Scene {
 
   private getDirectStep(x: number, y: number) {
     return { x: x + Math.sign(10 - x), y: y + Math.sign(10 - y) };
+  }
+
+  private generateRandomObstacles(cols: number, rows: number, centerX: number, centerY: number) {
+    const spawnPoints = [{ x: 0, y: 0 }, { x: 19, y: 0 }, { x: 0, y: 19 }, { x: 19, y: 19 }, { x: 10, y: 0 }, { x: 19, y: 10 }, { x: 0, y: 10 }];
+    let placed = 0;
+    let attempts = 0;
+    while (placed < 24 && attempts++ < 150) {
+      const x = 2 + Math.floor(Math.random() * (cols - 4));
+      const y = 2 + Math.floor(Math.random() * (rows - 4));
+      if (Math.abs(x - centerX) <= 2 && Math.abs(y - centerY) <= 2) continue;
+      if (!this.map.grid[y][x].isWalkable) continue;
+
+      this.map.setWalkable(x, y, false);
+      this.map.calculate([{ x: centerX, y: centerY }]);
+      const keepsSpawnsReachable = spawnPoints.every(point => this.map.grid[point.y][point.x].distance < Number.MAX_VALUE);
+      if (keepsSpawnsReachable) placed++;
+      else this.map.setWalkable(x, y, true);
+    }
   }
 }
 
