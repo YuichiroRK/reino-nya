@@ -31,7 +31,7 @@ class MainScene extends Phaser.Scene {
   private waveSystem = new WaveSystem();
   private gameState: 'playing' | 'victory' | 'defeat' = 'playing';
   private isPaused = false;
-  private coins = 500;
+  private auraPoints = 500;
   private rewardedWave = 0;
   private difficultyMultiplier = 1;
   private spawnIndex = 0;
@@ -114,7 +114,7 @@ class MainScene extends Phaser.Scene {
     this.waveSystem.setLevel(this.selectedLevel.waves);
     this.gameState = 'playing';
     this.isPaused = false;
-    this.coins = 500;
+    this.auraPoints = 500;
     this.rewardedWave = 0;
     this.spawnIndex = 0;
     this.doorCells = new Set();
@@ -192,13 +192,13 @@ class MainScene extends Phaser.Scene {
           if (this.activeTool === 'tower') {
             const cellKey = `${x},${y}`;
             // Fix #2: block if occupied by another tower
-            if (!(x === 10 && y === 10) && !this.occupiedCells.has(cellKey) && this.canPlaceCharacter(this.selectedCharacter) && this.coins >= this.getTowerCost(this.selectedCharacter)) {
+            if (!(x === 10 && y === 10) && !this.occupiedCells.has(cellKey) && this.canPlaceCharacter(this.selectedCharacter) && this.auraPoints >= this.getTowerCost(this.selectedCharacter)) {
               const tower = new Tower(this, x, y, this.tileSize, this.selectedCharacter, (t) => this.openUIPanel(t));
               // Fix #3: draw LoS range immediately
               tower.drawRange(this.map);
               this.towers.push(tower);
               this.occupiedCells.add(cellKey);
-              this.coins -= this.getTowerCost(this.selectedCharacter);
+              this.auraPoints -= this.getTowerCost(this.selectedCharacter);
               this.updateTowerLimit();
               this.updateEconomyUI();
             }
@@ -238,7 +238,7 @@ class MainScene extends Phaser.Scene {
     if (this.gameState !== 'playing' || this.isPaused) return;
     const activeEnemies = this.enemies.filter(enemy => enemy.isActive).length;
     if (this.waveSystem.wave > this.rewardedWave && activeEnemies === 0) {
-      this.coins += this.waveSystem.wave * 25;
+      this.auraPoints += this.waveSystem.wave * 25;
       this.progression.addExperience(this.waveSystem.wave * 20);
       this.rewardedWave = this.waveSystem.wave;
     }
@@ -254,7 +254,7 @@ class MainScene extends Phaser.Scene {
       if (this.selectedTower.profile.id === 'xavi') this.uiTowerPortrait.src = `/assets/characters/${this.selectedTower.isTransformed ? 'MosasaurioXaviIdle' : 'HumanXaviIdle'}.png`;
     }
     if (this.selectedEnemy?.isActive) {
-      this.uiEnemyDetails.innerHTML = `<strong>Estado de amenaza</strong>Vida: ${Math.ceil(this.selectedEnemy.hp)}/${this.selectedEnemy.maxHp}<br>Daño: ${Math.ceil(this.selectedEnemy.attackDamage)}<br>Velocidad: ${this.selectedEnemy.speed}<br>Recompensa: ${this.selectedEnemy.profile.reward} monedas`;
+      this.uiEnemyDetails.innerHTML = `<strong>Estado de amenaza</strong>Vida: ${Math.ceil(this.selectedEnemy.hp)}/${this.selectedEnemy.maxHp}<br>Daño: ${Math.ceil(this.selectedEnemy.attackDamage)}<br>Velocidad: ${this.selectedEnemy.speed}<br>Recompensa: ${this.selectedEnemy.profile.reward} Aura Points`;
     }
     if (this.gems.every(gem => gem.isDestroyed)) this.endGame('defeat');
     else if (this.waveSystem.wave >= this.waveSystem.maxWaves && !this.waveSystem.isSpawning && this.enemies.every(enemy => !enemy.isActive)) this.endGame('victory');
@@ -492,7 +492,7 @@ class MainScene extends Phaser.Scene {
     this.uiPanel.classList.remove('has-portrait');
     this.uiTowerName.innerText = enemy.profile.name;
     this.uiTowerRole.innerText = `Enemigo ${enemy.profile.type} · ${enemy.profile.movement === 'flying' ? 'Volador' : 'Terrestre'}`;
-    this.uiEnemyDetails.innerHTML = `<strong>Estado de amenaza</strong>Vida: ${Math.ceil(enemy.hp)}/${enemy.maxHp}<br>Daño: ${Math.ceil(enemy.attackDamage)}<br>Velocidad: ${enemy.speed}<br>Recompensa: ${enemy.profile.reward} monedas`;
+    this.uiEnemyDetails.innerHTML = `<strong>Estado de amenaza</strong>Vida: ${Math.ceil(enemy.hp)}/${enemy.maxHp}<br>Daño: ${Math.ceil(enemy.attackDamage)}<br>Velocidad: ${enemy.speed}<br>Recompensa: ${enemy.profile.reward} Aura Points`;
   }
 
   private updateSkillUI(tower: Tower) {
@@ -524,15 +524,15 @@ class MainScene extends Phaser.Scene {
   }
 
   private updateUpgradeUI(tower: Tower) {
-    this.uiUpgradeInfo.innerText = tower.upgradeLevel >= 4 ? 'Nivel máximo' : `Nivel ${tower.upgradeLevel} · ${tower.upgradeCost} monedas`;
-    this.uiUpgradeButton.disabled = tower.upgradeLevel >= 4 || this.coins < tower.upgradeCost;
+    this.uiUpgradeInfo.innerText = tower.upgradeLevel >= 4 ? 'Nivel máximo' : `Nivel ${tower.upgradeLevel} · ${tower.upgradeCost} Aura Points`;
+    this.uiUpgradeButton.disabled = tower.upgradeLevel >= 4 || this.auraPoints < tower.upgradeCost;
   }
 
   private upgradeSelectedTower() {
-    if (!this.selectedTower || this.coins < this.selectedTower.upgradeCost) return;
+    if (!this.selectedTower || this.auraPoints < this.selectedTower.upgradeCost) return;
     const cost = this.selectedTower.upgradeCost;
     if (this.selectedTower.upgrade()) {
-      this.coins -= cost;
+      this.auraPoints -= cost;
       this.updateUpgradeUI(this.selectedTower);
       this.uiTowerRole.innerText = `Rol: ${this.selectedTower.profile.roles.join(', ')} | Daño: ${this.selectedTower.profile.baseStats.attack * this.selectedTower.upgradeLevel} | Vida: ${Math.ceil(this.selectedTower.hp)}/${this.selectedTower.maxHp} | Nv ${this.selectedTower.upgradeLevel}`;
       VisualFX.floatText(this, this.selectedTower.sprite.x, this.selectedTower.sprite.y, '¡Mejorada!', '#facc15');
@@ -606,8 +606,8 @@ class MainScene extends Phaser.Scene {
       this.uiTowerLimit.innerText = `Límite alcanzado para ${profile.name}`;
       return false;
     }
-    if (this.coins < this.getTowerCost(profile)) {
-      this.uiTowerLimit.innerText = `Necesitas ${this.getTowerCost(profile)} monedas`;
+    if (this.auraPoints < this.getTowerCost(profile)) {
+      this.uiTowerLimit.innerText = `Necesitas ${this.getTowerCost(profile)} Aura Points`;
       return false;
     }
     return true;
@@ -620,7 +620,7 @@ class MainScene extends Phaser.Scene {
   }
 
   private updateEconomyUI() {
-    if (this.uiCoins) this.uiCoins.innerText = `Monedas: ${this.coins}`;
+    if (this.uiCoins) this.uiCoins.innerText = `Aura Points: ${this.auraPoints}`;
     if (this.uiProfileStatus) this.uiProfileStatus.innerText = `Perfil Nv ${this.progression.level} · ${this.progression.experience}/${this.progression.experienceToNextLevel} XP`;
     if (this.selectedTower) this.updateUpgradeUI(this.selectedTower);
   }
@@ -629,7 +629,7 @@ class MainScene extends Phaser.Scene {
     if (!this.uiTowerLimit) return;
     const current = this.towers.filter(tower => tower.profile.id === this.selectedCharacter.id).length;
     this.uiTowerLimit.innerText = `${this.selectedCharacter.name}: ${current}/${this.getTowerLimit(this.selectedCharacter.rarity)}`;
-    this.uiTowerPrice.innerText = `Coste: ${this.getTowerCost(this.selectedCharacter)} monedas`;
+    this.uiTowerPrice.innerText = `Coste: ${this.getTowerCost(this.selectedCharacter)} Aura Points`;
   }
 
   private removeSelectedTower() {
@@ -639,7 +639,7 @@ class MainScene extends Phaser.Scene {
     tower.destroy();
     this.towers = this.towers.filter(item => item !== tower);
     this.occupiedCells.delete(cellKey);
-    this.coins += Math.floor(this.getTowerCost(tower.profile) * 0.5);
+    this.auraPoints += Math.floor(this.getTowerCost(tower.profile) * 0.5);
     this.closeUIPanel();
     this.updateTowerLimit();
     this.updateEconomyUI();
@@ -651,7 +651,7 @@ class MainScene extends Phaser.Scene {
     const profile = EnemyData[enemyId] ?? EnemyData.basic;
     const wave = this.waveSystem.wave;
         this.enemies.push(new Enemy(this, point.x, point.y, this.tileSize, profile, this.spawnIndex % this.gems.length, this.difficultyMultiplier + wave * 0.08, (reward, x, y) => {
-          this.coins += reward;
+          this.auraPoints += reward;
           this.progression.addExperience(reward);
       VisualFX.floatText(this, x, y, `+${reward}`, '#fcd34d');
     }));
