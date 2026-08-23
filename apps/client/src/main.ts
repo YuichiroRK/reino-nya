@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { DijkstraMap, Angel, Lucy, Tribu, Kiu, Gretch, Cesar } from '@td-nya/game-data';
 import { Enemy } from './entities/Enemy';
 import { Tower } from './entities/Tower';
-import { CharacterProfile, TargetingPriority } from '@td-nya/shared';
+import { CharacterProfile, Rarity, TargetingPriority } from '@td-nya/shared';
 
 const CHARACTER_MAP: Record<string, CharacterProfile> = {
   angel: Angel,
@@ -30,6 +30,8 @@ class MainScene extends Phaser.Scene {
   private uiTowerRole!: HTMLElement;
   private uiTargetingSelect!: HTMLSelectElement;
   private uiCloseBtn!: HTMLButtonElement;
+  private uiRemoveBtn!: HTMLButtonElement;
+  private uiTowerLimit!: HTMLElement;
 
   constructor() {
     super({ key: 'MainScene' });
@@ -88,12 +90,13 @@ class MainScene extends Phaser.Scene {
           if (this.activeTool === 'tower') {
             const cellKey = `${x},${y}`;
             // Fix #2: block if occupied by another tower
-            if (this.map.grid[y][x].isWalkable && !(x === 10 && y === 10) && !this.occupiedCells.has(cellKey)) {
+            if (this.map.grid[y][x].isWalkable && !(x === 10 && y === 10) && !this.occupiedCells.has(cellKey) && this.canPlaceCharacter(this.selectedCharacter)) {
               const tower = new Tower(this, x, y, this.tileSize, this.selectedCharacter, (t) => this.openUIPanel(t));
               // Fix #3: draw LoS range immediately
               tower.drawRange(this.map);
               this.towers.push(tower);
               this.occupiedCells.add(cellKey);
+              this.updateTowerLimit();
             }
           } else if (this.activeTool === 'wall') {
             if (!(x === 10 && y === 10)) {
@@ -140,8 +143,12 @@ class MainScene extends Phaser.Scene {
     this.uiTowerRole = document.getElementById('tower-role')!;
     this.uiTargetingSelect = document.getElementById('targeting-select') as HTMLSelectElement;
     this.uiCloseBtn = document.getElementById('close-panel') as HTMLButtonElement;
+    this.uiRemoveBtn = document.getElementById('remove-tower') as HTMLButtonElement;
+    this.uiTowerLimit = document.getElementById('tower-limit')!;
 
     this.uiCloseBtn.addEventListener('click', () => this.closeUIPanel());
+    this.uiRemoveBtn.addEventListener('click', () => this.removeSelectedTower());
+    this.updateTowerLimit();
 
     this.uiTargetingSelect.addEventListener('change', (e) => {
       if (this.selectedTower) {
@@ -174,6 +181,7 @@ class MainScene extends Phaser.Scene {
     charSelect.addEventListener('change', (e) => {
       const val = (e.target as HTMLSelectElement).value;
       this.selectedCharacter = CHARACTER_MAP[val] ?? Angel;
+      this.updateTowerLimit();
     });
   }
 
@@ -207,6 +215,38 @@ class MainScene extends Phaser.Scene {
   closeUIPanel() {
     this.selectedTower = null;
     this.uiPanel.classList.remove('active');
+  }
+
+  private getTowerLimit(rarity: Rarity) {
+    if (rarity === Rarity.SSR) return 1;
+    if (rarity === Rarity.SR) return 2;
+    return 3;
+  }
+
+  private canPlaceCharacter(profile: CharacterProfile) {
+    const current = this.towers.filter(tower => tower.profile.rarity === profile.rarity).length;
+    if (current >= this.getTowerLimit(profile.rarity)) {
+      this.uiTowerLimit.innerText = `Límite alcanzado para ${profile.rarity}`;
+      return false;
+    }
+    return true;
+  }
+
+  private updateTowerLimit() {
+    if (!this.uiTowerLimit) return;
+    const current = this.towers.filter(tower => tower.profile.rarity === this.selectedCharacter.rarity).length;
+    this.uiTowerLimit.innerText = `${this.selectedCharacter.rarity}: ${current}/${this.getTowerLimit(this.selectedCharacter.rarity)}`;
+  }
+
+  private removeSelectedTower() {
+    if (!this.selectedTower) return;
+    const tower = this.selectedTower;
+    const cellKey = `${tower.gridPos.x},${tower.gridPos.y}`;
+    tower.destroy();
+    this.towers = this.towers.filter(item => item !== tower);
+    this.occupiedCells.delete(cellKey);
+    this.closeUIPanel();
+    this.updateTowerLimit();
   }
 
   moveEnemies() {

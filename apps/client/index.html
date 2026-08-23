@@ -168,6 +168,29 @@
     #close-panel:hover {
       color: white;
     }
+
+    #remove-tower {
+      width: 100%;
+      margin-top: 18px;
+      padding: 10px;
+      border: 1px solid #ef5350;
+      border-radius: 6px;
+      background: rgba(239, 83, 80, 0.15);
+      color: #ff8a80;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #remove-tower:hover {
+      background: rgba(239, 83, 80, 0.3);
+    }
+
+    #tower-limit {
+      margin: 0;
+      color: #aaa;
+      font-size: 0.75rem;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -184,6 +207,7 @@
         <option value="lucy">🦋 Lucy (SR)</option>
         <option value="cesar">⚔️ Cesar (R)</option>
       </select>
+      <p id="tower-limit">Torres: 0/6</p>
     </div>
     <button class="tool-btn" data-tool="wall">🧱 Muro</button>
   </div>
@@ -204,6 +228,7 @@
         <option value="FASTEST">Más rápido</option>
       </select>
     </div>
+    <button id="remove-tower">Quitar torre</button>
   </div>
   <script type="module" src="/src/main.ts"></script>
 </body>

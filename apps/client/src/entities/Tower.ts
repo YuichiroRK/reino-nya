@@ -301,4 +301,9 @@ export class Tower {
   heal(amount: number) {
     this.hp = Math.min(this.maxHp, this.hp + amount);
   }
+
+  destroy() {
+    this.rangeGraphics.destroy();
+    this.sprite.destroy();
+  }
 }
