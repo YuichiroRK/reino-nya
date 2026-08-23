@@ -34,6 +34,7 @@ class MainScene extends Phaser.Scene {
   private rewardedWave = 0;
   private difficultyMultiplier = 1;
   private spawnIndex = 0;
+  private selectedEnemyId = 'basic';
   private selectedLevel = Levels.level1;
   private progression = new ProgressionSystem();
   private doorCells = new Set<string>();
@@ -78,6 +79,7 @@ class MainScene extends Phaser.Scene {
   private uiUpgradeButton!: HTMLButtonElement;
   private uiUpgradeInfo!: HTMLElement;
   private uiProfileStatus!: HTMLElement;
+  private uiEnemySelect!: HTMLSelectElement;
 
   constructor() {
     super({ key: 'MainScene' });
@@ -183,7 +185,7 @@ class MainScene extends Phaser.Scene {
         } else {
           // Click Izquierdo: Solo spawnear si es caminable
           if (this.map.grid[y][x].isWalkable) {
-            const enemy = new Enemy(this, x, y, this.tileSize, EnemyData.basic);
+            const enemy = new Enemy(this, x, y, this.tileSize, EnemyData[this.selectedEnemyId] ?? EnemyData.basic);
             this.enemies.push(enemy);
           } else {
             this.closeUIPanel();
@@ -267,6 +269,7 @@ class MainScene extends Phaser.Scene {
     this.uiUpgradeButton = document.getElementById('upgrade-tower') as HTMLButtonElement;
     this.uiUpgradeInfo = document.getElementById('upgrade-info')!;
     this.uiProfileStatus = document.getElementById('profile-status')!;
+    this.uiEnemySelect = document.getElementById('enemy-select') as HTMLSelectElement;
     this.uiSkillModal.classList.remove('visible');
 
     this.uiCloseBtn.addEventListener('click', () => this.closeUIPanel());
@@ -354,6 +357,9 @@ class MainScene extends Phaser.Scene {
       this.selectedCharacter = CHARACTER_MAP[val] ?? Angel;
       this.updateTowerLimit();
     });
+    this.uiEnemySelect.addEventListener('change', () => {
+      this.selectedEnemyId = this.uiEnemySelect.value;
+    });
   }
 
   toggleWall(x: number, y: number) {
@@ -390,10 +396,11 @@ class MainScene extends Phaser.Scene {
   private updateSkillUI(tower: Tower) {
     const statuses = tower.getSkillStatuses(this.time.now);
     this.uiSkills.innerHTML = statuses.map(skill => {
-      if (skill.type === 'passive') return `<button class="skill-card passive" data-skill-id="${skill.id}"><span>${skill.name}</span><span class="skill-state">PASIVA</span></button>`;
+      const description = skill.description ?? this.describeSkill(skill);
+      if (skill.type === 'passive') return `<button class="skill-card passive" data-skill-id="${skill.id}"><span class="skill-copy"><span>${skill.name}</span><small class="skill-description">${description}</small></span><span class="skill-state">PASIVA</span></button>`;
       const status = skill.remainingMs > 0 ? `${(skill.remainingMs / 1000).toFixed(1)}s` : 'Lista';
       const stateClass = skill.remainingMs > 0 ? 'cooldown' : 'ready';
-      return `<button class="skill-card ${stateClass}" data-skill-id="${skill.id}"><span>${skill.name}</span><span class="skill-state">${skill.active ? 'ACTIVA' : status}</span></button>`;
+      return `<button class="skill-card ${stateClass}" data-skill-id="${skill.id}"><span class="skill-copy"><span>${skill.name}</span><small class="skill-description">${description}</small></span><span class="skill-state">${skill.active ? 'ACTIVA' : status}</span></button>`;
     }).join('');
     this.uiSkills.querySelectorAll<HTMLButtonElement>('[data-skill-id]').forEach(button => {
       const skill = tower.profile.skills?.find(item => item.id === button.dataset.skillId);
@@ -580,10 +587,6 @@ class MainScene extends Phaser.Scene {
           : this.map.getNextStep(nextNode.x, nextNode.y) ?? nextNode;
       }
 
-      if (!nextNode && (enemy.profile.type === 'armored' || enemy.profile.type === 'boss')) {
-        this.tryOpenWall(enemy);
-      }
-
       if (nextNode) {
         enemy.gridPos.x = nextNode.x;
         enemy.gridPos.y = nextNode.y;
@@ -602,24 +605,6 @@ class MainScene extends Phaser.Scene {
 
   private getDirectStep(x: number, y: number) {
     return { x: x + Math.sign(10 - x), y: y + Math.sign(10 - y) };
-  }
-
-  private tryOpenWall(enemy: Enemy) {
-    const directions = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }];
-    for (const direction of directions) {
-      const x = enemy.gridPos.x + direction.x;
-      const y = enemy.gridPos.y + direction.y;
-      if (x === 10 && y === 10) continue;
-      const node = this.map.grid[y]?.[x];
-      if (node && !node.isWalkable) {
-        this.map.setWalkable(x, y, true);
-        this.map.calculate([{ x: 10, y: 10 }]);
-        this.gridRects[y][x].setFillStyle(0x222222);
-        VisualFX.floatText(this, x * this.tileSize + this.tileSize / 2, y * this.tileSize + this.tileSize / 2, 'Muro abierto', '#fca5a5');
-        for (const tower of this.towers) tower.drawRange(this.map);
-        return;
-      }
-    }
   }
 
   private createFortressDoors(centerX: number, centerY: number) {
