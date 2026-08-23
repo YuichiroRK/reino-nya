@@ -67,6 +67,13 @@ class MainScene extends Phaser.Scene {
   private uiCoins!: HTMLElement;
   private uiSkills!: HTMLElement;
   private uiSkillInfo!: HTMLElement;
+  private uiSkillModal!: HTMLElement;
+  private uiSkillDetailTitle!: HTMLElement;
+  private uiSkillDetailType!: HTMLElement;
+  private uiSkillDetailDescription!: HTMLElement;
+  private uiSkillDetailEffects!: HTMLElement;
+  private uiSkillDetailCooldown!: HTMLElement;
+  private uiCloseSkillDetail!: HTMLButtonElement;
   private uiSkillTarget!: HTMLSelectElement;
   private uiUpgradeButton!: HTMLButtonElement;
   private uiUpgradeInfo!: HTMLElement;
@@ -249,10 +256,18 @@ class MainScene extends Phaser.Scene {
     this.uiCoins = document.getElementById('coin-status')!;
     this.uiSkills = document.getElementById('skill-status')!;
     this.uiSkillInfo = document.getElementById('skill-info')!;
+    this.uiSkillModal = document.getElementById('skill-detail-modal')!;
+    this.uiSkillDetailTitle = document.getElementById('skill-detail-title')!;
+    this.uiSkillDetailType = document.getElementById('skill-detail-type')!;
+    this.uiSkillDetailDescription = document.getElementById('skill-detail-description')!;
+    this.uiSkillDetailEffects = document.getElementById('skill-detail-effects')!;
+    this.uiSkillDetailCooldown = document.getElementById('skill-detail-cooldown')!;
+    this.uiCloseSkillDetail = document.getElementById('close-skill-detail') as HTMLButtonElement;
     this.uiSkillTarget = document.getElementById('skill-target') as HTMLSelectElement;
     this.uiUpgradeButton = document.getElementById('upgrade-tower') as HTMLButtonElement;
     this.uiUpgradeInfo = document.getElementById('upgrade-info')!;
     this.uiProfileStatus = document.getElementById('profile-status')!;
+    this.uiSkillModal.classList.remove('visible');
 
     this.uiCloseBtn.addEventListener('click', () => this.closeUIPanel());
     this.uiRemoveBtn.addEventListener('click', () => this.removeSelectedTower());
@@ -294,6 +309,10 @@ class MainScene extends Phaser.Scene {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-skill-id]');
       const skill = this.selectedTower?.profile.skills?.find(item => item.id === button?.dataset.skillId);
       if (skill) this.showSkillInfo(skill);
+    });
+    this.uiCloseSkillDetail.addEventListener('click', () => this.uiSkillModal.classList.remove('visible'));
+    this.uiSkillModal.addEventListener('click', event => {
+      if (event.target === this.uiSkillModal) this.uiSkillModal.classList.remove('visible');
     });
     this.uiSkillTarget.addEventListener('change', () => {
       if (this.selectedTower) this.selectedTower.skillTargetPriority = this.uiSkillTarget.value as SkillTargetPriority;
@@ -422,6 +441,14 @@ class MainScene extends Phaser.Scene {
   private showSkillInfo(skill: NonNullable<CharacterProfile['skills']>[number]) {
     this.uiSkillInfo.innerHTML = `<strong>${skill.name}</strong>${skill.description ?? this.describeSkill(skill)}`;
     this.uiSkillInfo.classList.add('visible');
+    this.uiSkillDetailTitle.innerText = skill.name;
+    this.uiSkillDetailType.innerText = skill.type === 'passive' ? 'Pasiva automática' : 'Activa automática';
+    this.uiSkillDetailDescription.innerText = skill.description ?? `Efecto de ${skill.name}: ${this.describeSkill(skill)}.`;
+    this.uiSkillDetailEffects.innerText = this.describeSkill(skill);
+    this.uiSkillDetailCooldown.innerText = skill.type === 'active'
+      ? `Cooldown: ${(skill.cooldownMs ?? 0) / 1000}s · Se activa automáticamente durante el combate.`
+      : 'Se activa automáticamente cuando se cumple su condición.';
+    this.uiSkillModal.classList.add('visible');
   }
 
   closeUIPanel() {

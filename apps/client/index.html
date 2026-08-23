@@ -4,19 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Imperio del Nya - Tower Defense</title>
-  <style>
+   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
     :root {
-      --primary-color: #bb86fc;
-      --bg-color: #121212;
-      --surface-color: rgba(30, 30, 30, 0.85);
+      --primary-color: #c084fc;
+      --pink-color: #f9a8d4;
+      --cyan-color: #67e8f9;
+      --bg-color: #100d1a;
+      --surface-color: rgba(31, 24, 46, 0.92);
       --text-color: #ffffff;
     }
     body {
       margin: 0;
       padding: 0;
-      background-color: var(--bg-color);
+      background: radial-gradient(circle at 50% -20%, #30204d 0%, var(--bg-color) 55%, #08070d 100%);
       color: var(--text-color);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Nunito', 'Segoe UI', Tahoma, sans-serif;
       overflow: hidden;
     }
     #game-container {
@@ -27,7 +31,7 @@
       left: 250px;
       width: calc(100vw - 500px);
       z-index: 1;
-      background: #09090b;
+      background: #0b0912;
     }
     
     /* Panel de UI Lateral Derecho (Glassmorphism) */
@@ -40,9 +44,9 @@
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
+      border-radius: 18px;
       padding: 20px;
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(192, 132, 252, 0.06);
       z-index: 10;
       transition: right 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
@@ -56,13 +60,13 @@
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 30px;
+      border-radius: 18px;
       padding: 10px 20px;
       display: flex;
       flex-direction: column;
       gap: 15px;
       z-index: 10;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 24px rgba(192, 132, 252, 0.08);
       width: 220px;
       box-sizing: border-box;
     }
@@ -225,10 +229,10 @@
       width: 220px;
       padding: 14px;
       border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 14px;
+      border-radius: 18px;
       background: linear-gradient(145deg, rgba(35, 35, 45, 0.94), rgba(20, 20, 25, 0.92));
       backdrop-filter: blur(12px);
-      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 24px rgba(249, 168, 212, 0.08);
       font-size: 0.82rem;
       line-height: 1.4;
     }
@@ -276,6 +280,20 @@
     #skill-info { display: none; margin-top: 9px; padding: 10px; border: 1px solid rgba(187, 134, 252, 0.35); border-radius: 8px; background: rgba(187, 134, 252, 0.08); color: #d4d4d8; font-size: 0.75rem; line-height: 1.4; }
     #skill-info.visible { display: block; }
     #skill-info strong { display: block; margin-bottom: 3px; color: #e9d5ff; }
+
+    #skill-detail-modal { position: fixed; inset: 0; z-index: 40; display: none; place-items: center; padding: 20px; background: rgba(8, 5, 15, 0.72); backdrop-filter: blur(8px); }
+    #skill-detail-modal.visible { display: grid; }
+    .skill-detail-card { position: relative; width: min(430px, calc(100vw - 36px)); overflow: hidden; border: 1px solid rgba(249, 168, 212, 0.45); border-radius: 22px; background: linear-gradient(145deg, #2b1e43, #171322); box-shadow: 0 20px 70px rgba(0, 0, 0, 0.65), 0 0 40px rgba(192, 132, 252, 0.2); }
+    .skill-detail-card::before { content: '✦  NYA SKILL CODEX  ✦'; display: block; padding: 13px 22px; background: linear-gradient(90deg, rgba(192, 132, 252, 0.25), rgba(249, 168, 212, 0.18)); color: #f5d0fe; font-size: 0.68rem; font-weight: 900; letter-spacing: 0.2em; }
+    .skill-detail-content { padding: 24px; }
+    #skill-detail-title { margin: 0 34px 5px 0; color: #fff; font-size: 1.55rem; font-weight: 900; }
+    #skill-detail-type { display: inline-block; margin-bottom: 17px; padding: 4px 9px; border-radius: 99px; background: rgba(103, 232, 249, 0.14); color: var(--cyan-color); font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    #skill-detail-description { margin: 0 0 18px; color: #d4d4d8; font-size: 0.92rem; line-height: 1.55; }
+    .detail-effect-box { padding: 13px 15px; border-left: 3px solid var(--pink-color); border-radius: 9px; background: rgba(255, 255, 255, 0.06); }
+    .detail-effect-label { display: block; margin-bottom: 5px; color: #a1a1aa; font-size: 0.66rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+    #skill-detail-effects { color: #fce7f3; font-size: 0.88rem; line-height: 1.5; }
+    #skill-detail-cooldown { margin: 16px 0 0; color: #a5b4fc; font-size: 0.78rem; font-weight: 700; }
+    #close-skill-detail { position: absolute; top: 49px; right: 18px; width: 30px; height: 30px; border: 1px solid rgba(255,255,255,0.18); border-radius: 50%; background: rgba(0,0,0,0.2); color: #fff; cursor: pointer; font-size: 1rem; }
 
     #end-screen { position: fixed; inset: 0; z-index: 30; display: none; place-items: center; background: rgba(5, 5, 8, 0.78); backdrop-filter: blur(8px); }
     #end-screen.visible { display: grid; }
@@ -384,6 +402,18 @@
       <button id="upgrade-tower">Mejorar torre</button>
     </div>
     <button id="remove-tower">Quitar torre</button>
+  </div>
+  <div id="skill-detail-modal" role="dialog" aria-modal="true" aria-labelledby="skill-detail-title">
+    <div class="skill-detail-card">
+      <button id="close-skill-detail" aria-label="Cerrar información">×</button>
+      <div class="skill-detail-content">
+        <h2 id="skill-detail-title">Skill</h2>
+        <span id="skill-detail-type">Pasiva</span>
+        <p id="skill-detail-description"></p>
+        <div class="detail-effect-box"><span class="detail-effect-label">Efectos en combate</span><span id="skill-detail-effects"></span></div>
+        <p id="skill-detail-cooldown"></p>
+      </div>
+    </div>
   </div>
   <div id="end-screen">
     <div class="end-card">
