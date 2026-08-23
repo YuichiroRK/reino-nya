@@ -41,9 +41,11 @@ class MainScene extends Phaser.Scene {
   
   // Referencias a la UI HTML
   private selectedTower: Tower | null = null;
+  private selectedEnemy: Enemy | null = null;
   private uiPanel!: HTMLElement;
   private uiTowerName!: HTMLElement;
   private uiTowerRole!: HTMLElement;
+  private uiEnemyDetails!: HTMLElement;
   private uiTargetingSelect!: HTMLSelectElement;
   private uiCloseBtn!: HTMLButtonElement;
   private uiRemoveBtn!: HTMLButtonElement;
@@ -68,6 +70,7 @@ class MainScene extends Phaser.Scene {
   private uiCoins!: HTMLElement;
   private uiSkills!: HTMLElement;
   private uiSkillInfo!: HTMLElement;
+  private dragState: { offsetX: number; offsetY: number } | null = null;
   private uiSkillModal!: HTMLElement;
   private uiSkillDetailTitle!: HTMLElement;
   private uiSkillDetailType!: HTMLElement;
@@ -160,6 +163,11 @@ class MainScene extends Phaser.Scene {
         this.openUIPanel(clickedTower);
         return;
       }
+      const clickedEnemy = this.enemies.find(enemy => enemy.isActive && enemy.sprite.getBounds().contains(pointer.x, pointer.y));
+      if (clickedEnemy) {
+        this.openEnemyPanel(clickedEnemy);
+        return;
+      }
 
       if (x >= 0 && x < cols && y >= 0 && y < rows) {
         if (pointer.rightButtonDown()) {
@@ -225,6 +233,9 @@ class MainScene extends Phaser.Scene {
     this.updateGameStatus();
     this.updateEconomyUI();
     if (this.selectedTower) this.updateSkillUI(this.selectedTower);
+    if (this.selectedEnemy?.isActive) {
+      this.uiEnemyDetails.innerHTML = `<strong>Estado de amenaza</strong>Vida: ${Math.ceil(this.selectedEnemy.hp)}/${this.selectedEnemy.maxHp}<br>Daño: ${Math.ceil(this.selectedEnemy.attackDamage)}<br>Velocidad: ${this.selectedEnemy.speed}<br>Recompensa: ${this.selectedEnemy.profile.reward} monedas`;
+    }
     if (this.gems.every(gem => gem.isDestroyed)) this.endGame('defeat');
     else if (this.waveSystem.wave >= this.waveSystem.maxWaves && !this.waveSystem.isSpawning && this.enemies.every(enemy => !enemy.isActive)) this.endGame('victory');
   }
@@ -233,6 +244,7 @@ class MainScene extends Phaser.Scene {
     this.uiPanel = document.getElementById('ui-panel')!;
     this.uiTowerName = document.getElementById('tower-name')!;
     this.uiTowerRole = document.getElementById('tower-role')!;
+    this.uiEnemyDetails = document.getElementById('enemy-details')!;
     this.uiTargetingSelect = document.getElementById('targeting-select') as HTMLSelectElement;
     this.uiCloseBtn = document.getElementById('close-panel') as HTMLButtonElement;
     this.uiRemoveBtn = document.getElementById('remove-tower') as HTMLButtonElement;
@@ -317,6 +329,20 @@ class MainScene extends Phaser.Scene {
     this.uiSkillModal.addEventListener('click', event => {
       if (event.target === this.uiSkillModal) this.uiSkillModal.classList.remove('visible');
     });
+    this.uiTowerName.addEventListener('pointerdown', event => {
+      const rect = this.uiPanel.getBoundingClientRect();
+      this.dragState = { offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top };
+      this.uiPanel.style.right = 'auto';
+      this.uiPanel.setPointerCapture(event.pointerId);
+    });
+    this.uiPanel.addEventListener('pointermove', event => {
+      if (!this.dragState) return;
+      const maxX = window.innerWidth - this.uiPanel.offsetWidth - 8;
+      const maxY = window.innerHeight - this.uiPanel.offsetHeight - 8;
+      this.uiPanel.style.left = `${Math.max(8, Math.min(maxX, event.clientX - this.dragState.offsetX))}px`;
+      this.uiPanel.style.top = `${Math.max(8, Math.min(maxY, event.clientY - this.dragState.offsetY))}px`;
+    });
+    this.uiPanel.addEventListener('pointerup', () => { this.dragState = null; });
     this.uiSkillTarget.addEventListener('change', () => {
       if (this.selectedTower) this.selectedTower.skillTargetPriority = this.uiSkillTarget.value as SkillTargetPriority;
     });
@@ -380,6 +406,8 @@ class MainScene extends Phaser.Scene {
 
   openUIPanel(tower: Tower) {
     this.selectedTower = tower;
+    this.selectedEnemy = null;
+    this.uiPanel.classList.remove('enemy-selected');
     this.uiSkillInfo.classList.remove('visible');
     this.uiTowerName.innerText = tower.profile.name + ' - ' + tower.profile.title;
     this.uiTowerRole.innerText = 'Rol: ' + tower.profile.roles.join(', ') + ' | Daño: ' + tower.profile.baseStats.attack * tower.upgradeLevel + ' | Vida: ' + Math.ceil(tower.hp) + '/' + tower.maxHp + ' | Nv ' + tower.upgradeLevel;
@@ -391,6 +419,15 @@ class MainScene extends Phaser.Scene {
     this.updateSkillUI(tower);
     
     this.uiPanel.classList.add('active');
+  }
+
+  openEnemyPanel(enemy: Enemy) {
+    this.selectedEnemy = enemy;
+    this.selectedTower = null;
+    this.uiPanel.classList.add('active', 'enemy-selected');
+    this.uiTowerName.innerText = enemy.profile.name;
+    this.uiTowerRole.innerText = `Enemigo ${enemy.profile.type} · ${enemy.profile.movement === 'flying' ? 'Volador' : 'Terrestre'}`;
+    this.uiEnemyDetails.innerHTML = `<strong>Estado de amenaza</strong>Vida: ${Math.ceil(enemy.hp)}/${enemy.maxHp}<br>Daño: ${Math.ceil(enemy.attackDamage)}<br>Velocidad: ${enemy.speed}<br>Recompensa: ${enemy.profile.reward} monedas`;
   }
 
   private updateSkillUI(tower: Tower) {
@@ -460,6 +497,8 @@ class MainScene extends Phaser.Scene {
 
   closeUIPanel() {
     this.selectedTower = null;
+    this.selectedEnemy = null;
+    this.uiPanel.classList.remove('enemy-selected');
     this.uiPanel.classList.remove('active');
   }
 

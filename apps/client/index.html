@@ -40,14 +40,15 @@
       top: 20px;
       right: -320px; /* Oculto por defecto */
       width: 220px;
-      background: var(--surface-color);
+      background: linear-gradient(145deg, rgba(250, 247, 255, 0.97), rgba(239, 232, 252, 0.97));
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.85);
       border-radius: 18px;
       padding: 20px;
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(192, 132, 252, 0.06);
       z-index: 10;
+      color: #332744;
       transition: right 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
     
@@ -56,10 +57,10 @@
       position: absolute;
       top: 20px;
       right: 20px;
-      background: var(--surface-color);
+      background: linear-gradient(145deg, rgba(250, 247, 255, 0.97), rgba(239, 232, 252, 0.97));
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.85);
       border-radius: 18px;
       padding: 10px 20px;
       display: flex;
@@ -69,12 +70,13 @@
       box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 24px rgba(192, 132, 252, 0.08);
       width: 220px;
       box-sizing: border-box;
+      color: #332744;
     }
 
     .tool-btn {
       background: transparent;
       border: 1px solid transparent;
-      color: white;
+      color: #4c3764;
       padding: 8px 16px;
       border-radius: 20px;
       cursor: pointer;
@@ -230,20 +232,23 @@
       padding: 14px;
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 18px;
-      background: linear-gradient(145deg, rgba(35, 35, 45, 0.94), rgba(20, 20, 25, 0.92));
+      background: linear-gradient(145deg, rgba(250, 247, 255, 0.97), rgba(239, 232, 252, 0.97));
       backdrop-filter: blur(12px);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 24px rgba(249, 168, 212, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 12px 40px rgba(40, 20, 60, 0.22), 0 0 24px rgba(249, 168, 212, 0.2);
       font-size: 0.82rem;
       line-height: 1.4;
+      color: #332744;
     }
 
     .hud-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; color: #aaa; font-size: 0.68rem; font-weight: bold; letter-spacing: 0.14em; text-transform: uppercase; }
+    .hud-header { color: #806a98; }
     #game-state { color: #a7f3d0; letter-spacing: 0; }
     .hud-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .hud-card { padding: 9px 10px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 9px; background: rgba(255, 255, 255, 0.045); }
+    .hud-card { padding: 9px 10px; border: 1px solid rgba(123, 83, 158, 0.14); border-radius: 9px; background: rgba(255, 255, 255, 0.52); }
     .hud-card.wide { grid-column: 1 / -1; }
-    .hud-card-label { display: block; margin-bottom: 3px; color: #888; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; }
-    .hud-value { color: #f4f4f5; font-size: 0.95rem; font-weight: 700; }
+    .hud-card-label { display: block; margin-bottom: 3px; color: #806a98; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .hud-value { color: #332744; font-size: 0.95rem; font-weight: 800; }
     #coin-status { color: #fcd34d; }
     .coin-card { border-color: rgba(252, 211, 77, 0.28); background: linear-gradient(135deg, rgba(120, 85, 10, 0.28), rgba(255, 255, 255, 0.045)); }
     .coin-value { display: flex; align-items: center; gap: 8px; color: #fef08a; font-size: 1.45rem; }
@@ -282,6 +287,11 @@
     #skill-info { display: none; margin-top: 9px; padding: 10px; border: 1px solid rgba(187, 134, 252, 0.35); border-radius: 8px; background: rgba(187, 134, 252, 0.08); color: #d4d4d8; font-size: 0.75rem; line-height: 1.4; }
     #skill-info.visible { display: block; }
     #skill-info strong { display: block; margin-bottom: 3px; color: #e9d5ff; }
+    #tower-name { cursor: grab; }
+    #tower-name:active { cursor: grabbing; }
+    .enemy-details { display: none; padding: 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.55); color: #4c3764; font-size: 0.8rem; line-height: 1.6; }
+    .enemy-selected .enemy-details { display: block; }
+    .enemy-selected .tower-only { display: none; }
 
     #skill-detail-modal { position: fixed; inset: 0; z-index: 40; display: none; place-items: center; padding: 20px; background: rgba(8, 5, 15, 0.72); backdrop-filter: blur(8px); }
     #skill-detail-modal.visible { display: grid; }
@@ -380,8 +390,9 @@
     <button id="close-panel">✕</button>
     <h2 id="tower-name">Nombre Torre</h2>
     <p style="font-size: 0.85rem; color: #aaa;" id="tower-role">Rol / Stats</p>
+    <div class="enemy-details" id="enemy-details"></div>
     
-    <div class="form-group">
+    <div class="form-group tower-only">
       <label for="targeting-select">Prioridad de Ataque (Targeting):</label>
       <select id="targeting-select">
         <option value="CLOSEST_TO_CORE">Más cerca del centro (Defecto)</option>
@@ -392,7 +403,7 @@
         <option value="FASTEST">Más rápido</option>
       </select>
     </div>
-    <div class="form-group">
+    <div class="form-group tower-only">
       <label for="skill-target">Objetivo de habilidades:</label>
       <select id="skill-target">
         <option value="weakest">Aliado más débil</option>
@@ -401,7 +412,7 @@
         <option value="all">Todos los aliados en rango</option>
       </select>
     </div>
-    <div class="form-group">
+    <div class="form-group tower-only">
       <label>Habilidades <span style="color:#888; font-size:0.7rem;">(click derecho para info)</span></label>
       <div id="skill-status">Selecciona una torre</div>
       <div id="skill-info"></div>
@@ -411,7 +422,7 @@
       <p id="upgrade-info">Nivel 1 · 100 monedas</p>
       <button id="upgrade-tower">Mejorar torre</button>
     </div>
-    <button id="remove-tower">Quitar torre</button>
+    <button class="tower-only" id="remove-tower">Quitar torre</button>
   </div>
   <div id="skill-detail-modal" role="dialog" aria-modal="true" aria-labelledby="skill-detail-title">
     <div class="skill-detail-card">
