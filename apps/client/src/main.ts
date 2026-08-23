@@ -452,6 +452,12 @@ class MainScene extends Phaser.Scene {
       const skill = tower.profile.skills?.find(item => item.id === button.dataset.skillId);
       if (skill) {
         button.title = skill.description ?? this.describeSkill(skill);
+        button.onpointerdown = event => {
+          if (event.button === 0) {
+            event.preventDefault();
+            this.showSkillInfo(skill);
+          }
+        };
         button.onclick = () => this.showSkillInfo(skill);
         button.oncontextmenu = event => {
           event.preventDefault();
