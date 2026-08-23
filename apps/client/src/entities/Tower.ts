@@ -243,7 +243,8 @@ export class Tower {
             this.skillCooldowns.set(skill.id, time + 1000);
           }
         }
-      } else if ((this.skillCooldowns.get(skill.id) ?? 0) <= time) {
+      } else if ((this.skillCooldowns.get(skill.id) ?? 0) <= time &&
+        (this.profile.id !== 'gretch' || enemies.some(enemy => enemy.isActive && this.isInRange(enemy)))) {
         this.activateSkill(skill, time, enemies, map, towers);
         this.skillCooldowns.set(skill.id, time + (skill.cooldownMs ?? 0));
       }

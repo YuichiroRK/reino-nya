@@ -224,9 +224,9 @@ class MainScene extends Phaser.Scene {
   }
 
   private canPlaceCharacter(profile: CharacterProfile) {
-    const current = this.towers.filter(tower => tower.profile.rarity === profile.rarity).length;
+    const current = this.towers.filter(tower => tower.profile.id === profile.id).length;
     if (current >= this.getTowerLimit(profile.rarity)) {
-      this.uiTowerLimit.innerText = `Límite alcanzado para ${profile.rarity}`;
+      this.uiTowerLimit.innerText = `Límite alcanzado para ${profile.name}`;
       return false;
     }
     return true;
@@ -234,8 +234,8 @@ class MainScene extends Phaser.Scene {
 
   private updateTowerLimit() {
     if (!this.uiTowerLimit) return;
-    const current = this.towers.filter(tower => tower.profile.rarity === this.selectedCharacter.rarity).length;
-    this.uiTowerLimit.innerText = `${this.selectedCharacter.rarity}: ${current}/${this.getTowerLimit(this.selectedCharacter.rarity)}`;
+    const current = this.towers.filter(tower => tower.profile.id === this.selectedCharacter.id).length;
+    this.uiTowerLimit.innerText = `${this.selectedCharacter.name}: ${current}/${this.getTowerLimit(this.selectedCharacter.rarity)}`;
   }
 
   private removeSelectedTower() {
