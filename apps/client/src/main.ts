@@ -441,6 +441,7 @@ class MainScene extends Phaser.Scene {
     this.selectedTower = tower;
     this.selectedEnemy = null;
     this.uiPanel.classList.remove('enemy-selected');
+    this.uiPanel.classList.toggle('has-portrait', tower.profile.id === 'tribu');
     this.uiSkillInfo.classList.remove('visible');
     this.uiTowerName.innerText = tower.profile.name + ' - ' + tower.profile.title;
     this.uiTowerRole.innerText = 'Rol: ' + tower.profile.roles.join(', ') + ' | Daño: ' + tower.profile.baseStats.attack * tower.upgradeLevel + ' | Vida: ' + Math.ceil(tower.hp) + '/' + tower.maxHp + ' | Nv ' + tower.upgradeLevel;
@@ -458,6 +459,7 @@ class MainScene extends Phaser.Scene {
     this.selectedEnemy = enemy;
     this.selectedTower = null;
     this.uiPanel.classList.add('active', 'enemy-selected');
+    this.uiPanel.classList.remove('has-portrait');
     this.uiTowerName.innerText = enemy.profile.name;
     this.uiTowerRole.innerText = `Enemigo ${enemy.profile.type} · ${enemy.profile.movement === 'flying' ? 'Volador' : 'Terrestre'}`;
     this.uiEnemyDetails.innerHTML = `<strong>Estado de amenaza</strong>Vida: ${Math.ceil(enemy.hp)}/${enemy.maxHp}<br>Daño: ${Math.ceil(enemy.attackDamage)}<br>Velocidad: ${enemy.speed}<br>Recompensa: ${enemy.profile.reward} monedas`;
