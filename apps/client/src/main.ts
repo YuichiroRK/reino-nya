@@ -28,6 +28,8 @@ class MainScene extends Phaser.Scene {
   private waveSystem = new WaveSystem();
   private gameState: 'playing' | 'victory' | 'defeat' = 'playing';
   private isPaused = false;
+  private coins = 500;
+  private rewardedWave = 0;
   
   // Referencias a la UI HTML
   private selectedTower: Tower | null = null;
@@ -41,6 +43,8 @@ class MainScene extends Phaser.Scene {
   private uiWaveStatus!: HTMLElement;
   private uiGemStatus!: HTMLElement;
   private uiWaveButton!: HTMLButtonElement;
+  private uiCoins!: HTMLElement;
+  private uiSkills!: HTMLElement;
 
   constructor() {
     super({ key: 'MainScene' });
@@ -105,13 +109,15 @@ class MainScene extends Phaser.Scene {
           if (this.activeTool === 'tower') {
             const cellKey = `${x},${y}`;
             // Fix #2: block if occupied by another tower
-            if (this.map.grid[y][x].isWalkable && !(x === 10 && y === 10) && !this.occupiedCells.has(cellKey) && this.canPlaceCharacter(this.selectedCharacter)) {
+            if (this.map.grid[y][x].isWalkable && !(x === 10 && y === 10) && !this.occupiedCells.has(cellKey) && this.canPlaceCharacter(this.selectedCharacter) && this.coins >= this.getTowerCost(this.selectedCharacter)) {
               const tower = new Tower(this, x, y, this.tileSize, this.selectedCharacter, (t) => this.openUIPanel(t));
               // Fix #3: draw LoS range immediately
               tower.drawRange(this.map);
               this.towers.push(tower);
               this.occupiedCells.add(cellKey);
+              this.coins -= this.getTowerCost(this.selectedCharacter);
               this.updateTowerLimit();
+              this.updateEconomyUI();
             }
           } else if (this.activeTool === 'wall') {
             if (!(x === 10 && y === 10)) {
@@ -147,12 +153,19 @@ class MainScene extends Phaser.Scene {
 
   update(time: number, delta: number) {
     if (this.gameState !== 'playing' || this.isPaused) return;
-    this.waveSystem.update(time, this.enemies.filter(enemy => enemy.isActive).length, Waves, wave => this.spawnWave(wave));
+    const activeEnemies = this.enemies.filter(enemy => enemy.isActive).length;
+    if (this.waveSystem.wave > this.rewardedWave && activeEnemies === 0) {
+      this.coins += this.waveSystem.wave * 25;
+      this.rewardedWave = this.waveSystem.wave;
+    }
+    this.waveSystem.update(time, activeEnemies, Waves, wave => this.spawnWave(wave));
     // Ciclo de combate
     for (const tower of this.towers) {
       tower.update(time, this.enemies, this.map, this.towers);
     }
     this.updateGameStatus();
+    this.updateEconomyUI();
+    if (this.selectedTower) this.updateSkillUI(this.selectedTower);
     if (this.gems.every(gem => gem.isDestroyed)) this.endGame('defeat');
     else if (this.waveSystem.wave >= this.waveSystem.maxWaves && this.enemies.every(enemy => !enemy.isActive)) this.endGame('victory');
   }
@@ -168,6 +181,8 @@ class MainScene extends Phaser.Scene {
     this.uiWaveStatus = document.getElementById('wave-status')!;
     this.uiGemStatus = document.getElementById('gem-status')!;
     this.uiWaveButton = document.getElementById('wave-button') as HTMLButtonElement;
+    this.uiCoins = document.getElementById('coin-status')!;
+    this.uiSkills = document.getElementById('skill-status')!;
 
     this.uiCloseBtn.addEventListener('click', () => this.closeUIPanel());
     this.uiRemoveBtn.addEventListener('click', () => this.removeSelectedTower());
@@ -176,6 +191,7 @@ class MainScene extends Phaser.Scene {
       this.uiWaveButton.innerText = this.isPaused ? 'Continuar' : 'Pausar';
     });
     this.updateTowerLimit();
+    this.updateEconomyUI();
 
     this.uiTargetingSelect.addEventListener('change', (e) => {
       if (this.selectedTower) {
@@ -235,8 +251,17 @@ class MainScene extends Phaser.Scene {
     
     // Sincronizar el select
     this.uiTargetingSelect.value = tower.targetingPriority;
+    this.updateSkillUI(tower);
     
     this.uiPanel.classList.add('active');
+  }
+
+  private updateSkillUI(tower: Tower) {
+    this.uiSkills.innerHTML = tower.getSkillStatuses(this.time.now).map(skill => {
+      if (skill.type === 'passive') return `<div>${skill.name}: Pasiva</div>`;
+      const status = skill.remainingMs > 0 ? `${(skill.remainingMs / 1000).toFixed(1)}s` : 'Lista';
+      return `<div>${skill.name}: ${status}${skill.active ? ' (Activa)' : ''}</div>`;
+    }).join('');
   }
 
   closeUIPanel() {
@@ -256,7 +281,21 @@ class MainScene extends Phaser.Scene {
       this.uiTowerLimit.innerText = `Límite alcanzado para ${profile.name}`;
       return false;
     }
+    if (this.coins < this.getTowerCost(profile)) {
+      this.uiTowerLimit.innerText = `Necesitas ${this.getTowerCost(profile)} monedas`;
+      return false;
+    }
     return true;
+  }
+
+  private getTowerCost(profile: CharacterProfile) {
+    if (profile.rarity === Rarity.SSR) return 250;
+    if (profile.rarity === Rarity.SR) return 150;
+    return 75;
+  }
+
+  private updateEconomyUI() {
+    if (this.uiCoins) this.uiCoins.innerText = `Monedas: ${this.coins}`;
   }
 
   private updateTowerLimit() {
@@ -272,8 +311,10 @@ class MainScene extends Phaser.Scene {
     tower.destroy();
     this.towers = this.towers.filter(item => item !== tower);
     this.occupiedCells.delete(cellKey);
+    this.coins += Math.floor(this.getTowerCost(tower.profile) * 0.5);
     this.closeUIPanel();
     this.updateTowerLimit();
+    this.updateEconomyUI();
   }
 
   private spawnWave(wave: WaveDefinition) {
@@ -283,7 +324,9 @@ class MainScene extends Phaser.Scene {
       const profile = EnemyData[entry.enemyId] ?? EnemyData.basic;
       for (let count = 0; count < entry.count; count++) {
         const point = spawnPoints[spawnIndex++ % spawnPoints.length];
-        this.enemies.push(new Enemy(this, point.x, point.y, this.tileSize, profile, spawnIndex % this.gems.length, 1 + wave.number * 0.08));
+        this.enemies.push(new Enemy(this, point.x, point.y, this.tileSize, profile, spawnIndex % this.gems.length, 1 + wave.number * 0.08, reward => {
+          this.coins += reward;
+        }));
       }
     }
   }

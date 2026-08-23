@@ -281,6 +281,15 @@ export class Tower {
     this.hp = Math.min(this.maxHp, this.hp + amount);
   }
 
+  getSkillStatuses(time: number) {
+    return (this.profile.skills ?? []).map(skill => ({
+      name: skill.name,
+      type: skill.type,
+      remainingMs: skill.type === 'active' ? Math.max(0, (this.skillCooldowns.get(skill.id) ?? 0) - time) : 0,
+      active: skill.type === 'active' && (this.activeEffects.get(skill.id) ?? 0) > time,
+    }));
+  }
+
   destroy() {
     this.rangeGraphics.destroy();
     this.sprite.destroy();

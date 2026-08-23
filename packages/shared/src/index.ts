@@ -94,6 +94,7 @@ export interface EnemyProfile {
   attackCooldownMs: number;
   color: number;
   defense?: number;
+  reward: number;
 }
 
 export interface WaveEntry {

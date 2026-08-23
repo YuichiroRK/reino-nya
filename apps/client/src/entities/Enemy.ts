@@ -12,9 +12,10 @@ export class Enemy {
   public readonly profile: EnemyProfile;
   public attackDamage: number;
   public targetGemIndex: number;
+  private readonly onDefeated?: (reward: number) => void;
   private lastGemAttack = 0;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, profile: EnemyProfile, targetGemIndex = 0, difficulty = 1) {
+  constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, profile: EnemyProfile, targetGemIndex = 0, difficulty = 1, onDefeated?: (reward: number) => void) {
     this.profile = profile;
     this.gridPos = { x, y };
     this.maxHp = profile.maxHp * difficulty;
@@ -22,6 +23,7 @@ export class Enemy {
     this.speed = profile.speed;
     this.attackDamage = profile.attackDamage * difficulty;
     this.targetGemIndex = targetGemIndex;
+    this.onDefeated = onDefeated;
     this.isActive = true;
 
     this.sprite = scene.add.rectangle(
@@ -56,6 +58,7 @@ export class Enemy {
 
   die() {
     this.isActive = false;
+    this.onDefeated?.(this.profile.reward);
     this.sprite.destroy();
   }
 
