@@ -5,16 +5,120 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Imperio del Nya - Tower Defense</title>
   <style>
+    :root {
+      --primary-color: #bb86fc;
+      --bg-color: #121212;
+      --surface-color: rgba(30, 30, 30, 0.85);
+      --text-color: #ffffff;
+    }
     body {
       margin: 0;
       padding: 0;
-      background-color: #111;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       overflow: hidden;
+    }
+    #game-container {
+      width: 100vw;
+      height: 100vh;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+    
+    /* Panel de UI Lateral Derecho (Glassmorphism) */
+    #ui-panel {
+      position: absolute;
+      top: 20px;
+      right: -320px; /* Oculto por defecto */
+      width: 280px;
+      background: var(--surface-color);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      z-index: 10;
+      transition: right 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    #ui-panel.active {
+      right: 20px; /* Visible */
+    }
+
+    #ui-panel h2 {
+      margin-top: 0;
+      font-size: 1.2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding-bottom: 10px;
+      color: var(--primary-color);
+    }
+
+    .form-group {
+      margin-top: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      color: #ccc;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      color: white;
+      font-size: 0.95rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    select:focus {
+      border-color: var(--primary-color);
+    }
+    
+    #close-panel {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: none;
+      color: #aaa;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+    #close-panel:hover {
+      color: white;
     }
   </style>
 </head>
 <body>
   <div id="game-container"></div>
+  
+  <div id="ui-panel">
+    <button id="close-panel">✕</button>
+    <h2 id="tower-name">Nombre Torre</h2>
+    <p style="font-size: 0.85rem; color: #aaa;" id="tower-role">Rol / Stats</p>
+    
+    <div class="form-group">
+      <label for="targeting-select">Prioridad de Ataque (Targeting):</label>
+      <select id="targeting-select">
+        <option value="CLOSEST_TO_CORE">Más cerca del centro (Defecto)</option>
+        <option value="CLOSEST_TO_TOWER">Más cerca de la torre</option>
+        <option value="FARTHEST_FROM_CORE">Más lejos del centro</option>
+        <option value="HIGHEST_HP">Más vida (Fuerte)</option>
+        <option value="LOWEST_HP">Menos vida (Débil)</option>
+        <option value="FASTEST">Más rápido</option>
+      </select>
+    </div>
+  </div>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
