@@ -345,12 +345,24 @@ class MainScene extends Phaser.Scene {
   }
 
   private updateSkillUI(tower: Tower) {
-    this.uiSkills.innerHTML = tower.getSkillStatuses(this.time.now).map(skill => {
+    const statuses = tower.getSkillStatuses(this.time.now);
+    this.uiSkills.innerHTML = statuses.map(skill => {
       if (skill.type === 'passive') return `<button class="skill-card passive" data-skill-id="${skill.id}"><span>${skill.name}</span><span class="skill-state">PASIVA</span></button>`;
       const status = skill.remainingMs > 0 ? `${(skill.remainingMs / 1000).toFixed(1)}s` : 'Lista';
       const stateClass = skill.remainingMs > 0 ? 'cooldown' : 'ready';
       return `<button class="skill-card ${stateClass}" data-skill-id="${skill.id}"><span>${skill.name}</span><span class="skill-state">${skill.active ? 'ACTIVA' : status}</span></button>`;
     }).join('');
+    this.uiSkills.querySelectorAll<HTMLButtonElement>('[data-skill-id]').forEach(button => {
+      const skill = tower.profile.skills?.find(item => item.id === button.dataset.skillId);
+      if (skill) {
+        button.title = skill.description ?? this.describeSkill(skill);
+        button.onclick = () => this.showSkillInfo(skill);
+        button.oncontextmenu = event => {
+          event.preventDefault();
+          this.showSkillInfo(skill);
+        };
+      }
+    });
   }
 
   private describeSkill(skill: NonNullable<CharacterProfile['skills']>[number]) {
