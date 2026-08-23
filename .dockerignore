@@ -1,0 +1,9 @@
+node_modules/
+dist/
+build/
+.git/
+.env
+postgres_data/
+docker-compose.yml
+README.md
+docs/
