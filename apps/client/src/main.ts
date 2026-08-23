@@ -200,7 +200,13 @@ class MainScene extends Phaser.Scene {
     this.uiCloseBtn.addEventListener('click', () => this.closeUIPanel());
     this.uiRemoveBtn.addEventListener('click', () => this.removeSelectedTower());
     this.uiWaveButton.addEventListener('click', () => {
-      this.isPaused = !this.isPaused;
+      if (this.isPaused) {
+        this.isPaused = false;
+        this.scene.resume();
+      } else {
+        this.isPaused = true;
+        this.scene.pause();
+      }
       this.uiWaveButton.innerText = this.isPaused ? 'Continuar' : 'Pausar';
       this.uiGameState.innerText = this.isPaused ? 'PAUSADO' : 'EN JUEGO';
       this.uiGameState.style.color = this.isPaused ? '#fcd34d' : '#a7f3d0';
