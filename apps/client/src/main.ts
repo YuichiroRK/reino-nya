@@ -60,7 +60,7 @@ class MainScene extends Phaser.Scene {
   create() {
     const cols = 20;
     const rows = 20;
-    this.tileSize = Math.min(32, Math.floor((window.innerWidth - 16) / cols));
+    this.tileSize = Math.min(32, Math.floor((this.scale.width - 16) / cols));
     
     this.map = new DijkstraMap(cols, rows);
     const centerX = 10;

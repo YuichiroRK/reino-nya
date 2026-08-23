@@ -24,8 +24,10 @@
       height: 100vh;
       position: absolute;
       top: 0;
-      left: 0;
+      left: 280px;
+      width: calc(100vw - 560px);
       z-index: 1;
+      background: #09090b;
     }
     
     /* Panel de UI Lateral Derecho (Glassmorphism) */
@@ -49,7 +51,7 @@
     #test-toolbar {
       position: absolute;
       top: 20px;
-      left: 20px;
+      right: 20px;
       background: var(--surface-color);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -61,7 +63,7 @@
       gap: 15px;
       z-index: 10;
       box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-      width: 225px;
+      width: 240px;
       box-sizing: border-box;
     }
 
@@ -132,6 +134,8 @@
       padding-bottom: 10px;
       color: var(--primary-color);
     }
+
+    #test-toolbar::before { content: 'DESPLIEGUE'; color: #888; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.16em; }
 
     .form-group {
       margin-top: 15px;
@@ -208,9 +212,9 @@
     #game-status {
       position: absolute;
       top: 20px;
-      left: 265px;
+      left: 20px;
       z-index: 10;
-      width: 220px;
+      width: 240px;
       padding: 14px;
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 14px;
@@ -229,6 +233,9 @@
     .hud-card-label { display: block; margin-bottom: 3px; color: #888; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; }
     .hud-value { color: #f4f4f5; font-size: 0.95rem; font-weight: 700; }
     #coin-status { color: #fcd34d; }
+    .coin-card { border-color: rgba(252, 211, 77, 0.28); background: linear-gradient(135deg, rgba(120, 85, 10, 0.28), rgba(255, 255, 255, 0.045)); }
+    .coin-value { display: flex; align-items: center; gap: 8px; color: #fef08a; font-size: 1.45rem; }
+    .coin-icon { display: inline-grid; width: 25px; height: 25px; place-items: center; border: 2px solid #facc15; border-radius: 50%; color: #facc15; font-size: 0.8rem; }
     #enemy-status { color: #fca5a5; }
     .progress-track { height: 5px; margin-top: 7px; overflow: hidden; border-radius: 10px; background: rgba(0, 0, 0, 0.4); }
     .progress-fill { width: 100%; height: 100%; border-radius: inherit; transition: width 0.25s ease; }
@@ -259,12 +266,19 @@
     .cooldown .skill-state { color: #94a3b8; }
 
     @media (max-width: 700px) {
+      #game-container { left: 0; width: 100vw; }
       #game-status { top: 10px; left: 10px; width: 205px; padding: 10px; }
-      #test-toolbar { top: auto; bottom: 10px; left: 10px; width: calc(100vw - 20px); padding: 7px 10px; gap: 6px; flex-direction: row; flex-wrap: wrap; justify-content: center; box-sizing: border-box; }
+      #test-toolbar { top: auto; bottom: 10px; right: 10px; left: 10px; width: calc(100vw - 20px); padding: 7px 10px; gap: 6px; flex-direction: row; flex-wrap: wrap; justify-content: center; box-sizing: border-box; }
       .tool-btn { min-height: 38px; padding: 7px 9px; font-size: 0.75rem; }
       #char-select-wrapper.visible { max-width: 100%; flex-basis: 100%; order: 3; justify-content: center; }
       #char-select { width: min(100%, 260px); min-height: 38px; }
       #ui-panel { top: auto; right: 10px; bottom: 65px; width: min(290px, calc(100vw - 20px)); }
+    }
+
+    @media (min-width: 701px) and (max-width: 1100px) {
+      #game-container { left: 230px; width: calc(100vw - 460px); }
+      #game-status { left: 12px; width: 195px; }
+      #test-toolbar { right: 12px; width: 195px; }
     }
   </style>
 </head>
@@ -276,7 +290,7 @@
       <div class="hud-card wide"><span class="hud-card-label">Oleada</span><span class="hud-value" id="wave-status">0 / 5</span><div class="progress-track"><div class="progress-fill" id="wave-progress"></div></div></div>
       <div class="hud-card"><span class="hud-card-label">Joyas</span><span class="hud-value" id="gem-status">3 / 3</span><div class="progress-track"><div class="progress-fill" id="gem-progress"></div></div></div>
       <div class="hud-card"><span class="hud-card-label">Amenazas</span><span class="hud-value" id="enemy-status">0</span></div>
-      <div class="hud-card wide"><span class="hud-card-label">Recursos disponibles</span><span class="hud-value" id="coin-status">500 monedas</span></div>
+      <div class="hud-card wide coin-card"><span class="hud-card-label">Recursos disponibles</span><span class="coin-value"><span class="coin-icon">N</span><span id="coin-status">500</span></span></div>
     </div>
     <button id="wave-button">Pausar</button>
   </div>
