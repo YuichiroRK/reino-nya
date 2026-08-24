@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { DijkstraMap, Angel, Lucy, Tribu, Kiu, Gretch, Cesar, Xavi, EnemyData, Levels } from '@td-nya/game-data';
+import { DijkstraMap, Angel, Lucy, Tribu, Kiu, Gretch, Cesar, Xavi, Sound, Rafael, Dokam, Champa, EnemyData, Levels } from '@td-nya/game-data';
 import { Enemy } from './entities/Enemy';
 import { Tower } from './entities/Tower';
 import { SacredGem } from './entities/SacredGem';
@@ -17,6 +17,10 @@ const CHARACTER_MAP: Record<string, CharacterProfile> = {
   gretch: Gretch,
   cesar: Cesar,
   xavi: Xavi,
+  sound: Sound,
+  rafael: Rafael,
+  dokam: Dokam,
+  champa: Champa,
 };
 
 class MainScene extends Phaser.Scene {
@@ -108,7 +112,7 @@ class MainScene extends Phaser.Scene {
 
   preload() {
     for (const [key, file] of Object.entries({
-      angel: 'AngelIdle.png', tribu: 'IdleTribu.png', gretch: 'GretchIdle.png', kiu: 'KiuIdle.png', lucy: 'LucyIdle.png', cesar: 'CesarIdle.png',
+      angel: 'AngelIdle.png', tribu: 'IdleTribu.png', gretch: 'GretchIdle.png', kiu: 'KiuIdle.png', lucy: 'LucyIdle.png', cesar: 'CesarIdle.png', sound: 'SoundIdle.png', rafael: 'RafaelIdle.png', dokam: 'DokamIdle.png', champa: 'ChampaIdle.png',
     })) this.load.image(`${key}-idle`, `/assets/characters/${file}`);
     this.load.image('xavi-human-idle', '/assets/characters/HumanXaviIdle.png');
     this.load.image('xavi-mosasaur-idle', '/assets/characters/MosasaurioXaviIdle.png');
@@ -506,10 +510,11 @@ class MainScene extends Phaser.Scene {
     this.selectedEnemy = null;
     this.uiPanel.classList.remove('enemy-selected', 'minimized');
     this.uiMinimizePanel.innerText = '−';
-    const hasPortrait = tower.profile.id === 'tribu' || tower.profile.id === 'angel' || tower.profile.id === 'xavi';
+    const portraitCharacters = ['tribu', 'angel', 'xavi', 'sound', 'rafael', 'dokam', 'champa'];
+    const hasPortrait = portraitCharacters.includes(tower.profile.id);
     this.uiPanel.classList.toggle('has-portrait', hasPortrait);
     if (hasPortrait) {
-      const portrait = tower.profile.id === 'tribu' ? 'IdleTribu' : tower.profile.id === 'angel' ? 'AngelIdle' : tower.profile.id === 'xavi' ? 'HumanXaviIdle' : 'HumanXaviIdle';
+      const portrait = tower.profile.id === 'tribu' ? 'IdleTribu' : tower.profile.id === 'angel' ? 'AngelIdle' : tower.profile.id === 'xavi' ? 'HumanXaviIdle' : `${tower.profile.name}Idle`;
       this.uiTowerPortrait.src = `/assets/characters/${portrait}.png`;
     }
     this.uiSkillInfo.classList.remove('visible');

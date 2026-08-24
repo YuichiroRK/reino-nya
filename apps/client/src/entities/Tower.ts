@@ -55,7 +55,7 @@ export class Tower {
 
     // Draw tower body (on top of range overlay)
     const spriteKey = profile.id === 'xavi' ? 'xavi-human-idle' : `${profile.id}-idle`;
-    this.sprite = ['tribu', 'angel', 'xavi', 'gretch', 'kiu', 'lucy', 'cesar'].includes(profile.id)
+    this.sprite = ['tribu', 'angel', 'xavi', 'gretch', 'kiu', 'lucy', 'cesar', 'sound', 'rafael', 'dokam', 'champa'].includes(profile.id)
       ? scene.add.image(origin.x + x * tileSize + tileSize / 2, origin.y + y * tileSize + tileSize / 2, spriteKey).setDisplaySize(tileSize * (profile.id === 'xavi' ? 1.15 : 1.25), tileSize * (profile.id === 'xavi' ? 1.15 : 1.25))
       : scene.add.rectangle(origin.x + x * tileSize + tileSize / 2, origin.y + y * tileSize + tileSize / 2, tileSize * 0.8, tileSize * 0.8, 0x4444ff);
     this.healthBar.update(this.sprite.x, this.sprite.y - 21, this.hp, this.maxHp, 0x22c55e);
@@ -210,6 +210,8 @@ export class Tower {
     const globalMultiplier = 1 + (this.globalLevel - 1) * 0.03;
     const damage = CombatSystem.calculateDamage(this.profile.baseStats.attack * this.upgradeLevel * globalMultiplier * (1 + this.upgradeEffects.attackPercent), attackBoost, damageMultiplier);
     target.takeDamage(damage);
+    if (this.profile.id === 'sound' || this.profile.id === 'rafael') target.applyStatus('marked', 3500, this.scene.time.now);
+    if (this.profile.id === 'dokam' && this.attackCount % 2 === 0) target.applyStatus('burn', 2500, this.scene.time.now, 8);
     if (aoeMultiplier > 1) {
       for (const enemy of enemies) {
         if (enemy !== target && enemy.isActive && this.isInRange(enemy)) enemy.takeDamage(damage * aoeMultiplier);
@@ -289,6 +291,19 @@ export class Tower {
         target.takeDamage(this.profile.baseStats.attack * 4);
         VisualFX.impact(this.scene, target.sprite.x, target.sprite.y, 0xffffff);
       }
+    }
+    if (skill.id === 'objection') {
+      const target = enemies.filter(enemy => enemy.isActive && this.isInRange(enemy))[0];
+      if (target) target.applyStatus('stun', 1400, time);
+    }
+    if (skill.id === 'additional-clause') {
+      for (const enemy of enemies) if (enemy.isActive && this.isInRange(enemy)) {
+        enemy.applyStatus('slow', 3500, time, skill.effect.slowPercent ?? 0.3);
+        enemy.applyStatus('marked', 3500, time);
+      }
+    }
+    if (skill.id === 'phoenix-burst') {
+      for (const enemy of enemies) if (enemy.isActive && this.isInRange(enemy)) enemy.applyStatus('burn', 4000, time, 12);
     }
     if (skill.id === 'pack-bite') {
       const target = enemies.filter(enemy => enemy.isActive && this.isInRange(enemy)).sort((a, b) => Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, a.sprite.x, a.sprite.y) - Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, b.sprite.x, b.sprite.y))[0];
@@ -406,7 +421,14 @@ export class Tower {
   }
 
   get upgradeCost() { return 100 * this.upgradeLevel; }
-  get effectiveRange() { return this.profile.baseStats.range + this.upgradeEffects.range; }
+  get effectiveRange() {
+    const skillRange = (this.profile.skills ?? []).reduce((range, skill) => {
+      const active = skill.type === 'active' && (this.activeEffects.get(skill.id) ?? 0) > this.scene.time.now;
+      const passive = skill.type === 'passive' && this.passiveReady.get(skill.id);
+      return range + (active || passive ? (skill.effect.rangeBoost ?? 0) * this.profile.baseStats.range : 0);
+    }, 0);
+    return this.profile.baseStats.range + this.upgradeEffects.range + skillRange;
+  }
 
   getPathCost(path: UpgradePathId) { return UpgradePaths[path][this.upgradePaths[path]]?.cost ?? 0; }
 
