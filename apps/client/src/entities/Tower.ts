@@ -40,6 +40,7 @@ export class Tower {
   public upgradePaths: Record<UpgradePathId, number> = { damage: 0, range: 0, speed: 0, piercing: 0 };
   public isTransformed = false;
   private readonly healthBar: HealthBar;
+  private readonly favorBar?: HealthBar;
   private summons: MiniMosasaur[] = [];
 
   constructor(scene: Phaser.Scene, x: number, y: number, tileSize: number, profile: CharacterProfile, onClick: (t: Tower) => void, origin = { x: 0, y: 0 }) {
@@ -51,6 +52,7 @@ export class Tower {
     this.maxHp = profile.baseStats.hp;
     this.hp = this.maxHp;
     this.healthBar = new HealthBar(scene, 28);
+    if (profile.id === 'angel') this.favorBar = new HealthBar(scene, 34);
 
     // LoS-aware range overlay
     this.rangeGraphics = scene.add.graphics();
@@ -58,9 +60,10 @@ export class Tower {
     // Draw tower body (on top of range overlay)
     const spriteKey = profile.id === 'xavi' ? 'xavi-human-idle' : `${profile.id}-idle`;
     this.sprite = ['tribu', 'angel', 'xavi', 'gretch', 'kiu', 'lucy', 'cesar', 'sound', 'rafael', 'dokam', 'champa'].includes(profile.id)
-      ? scene.add.image(origin.x + x * tileSize + tileSize / 2, origin.y + y * tileSize + tileSize / 2, spriteKey).setDisplaySize(tileSize * (profile.id === 'xavi' ? 1.15 : 1.25), tileSize * (profile.id === 'xavi' ? 1.15 : 1.25))
+      ? scene.add.image(origin.x + x * tileSize + tileSize / 2, origin.y + y * tileSize + tileSize / 2, spriteKey).setDisplaySize(tileSize * (profile.id === 'xavi' ? 1.8 : profile.id === 'angel' ? 1.95 : 1.7), tileSize * (profile.id === 'xavi' ? 1.8 : profile.id === 'angel' ? 1.95 : 1.7))
       : scene.add.rectangle(origin.x + x * tileSize + tileSize / 2, origin.y + y * tileSize + tileSize / 2, tileSize * 0.8, tileSize * 0.8, 0x4444ff);
-    this.healthBar.update(this.sprite.x, this.sprite.y - 21, this.hp, this.maxHp, 0x22c55e);
+    this.healthBar.update(this.sprite.x, this.sprite.y - this.tileSize * 0.9, this.hp, this.maxHp, 0x22c55e);
+    this.favorBar?.update(this.sprite.x, this.sprite.y - this.tileSize * 1.08, this.favor, 100, 0xfacc15);
 
     this.sprite.setInteractive({ useHandCursor: true });
     this.sprite.on('pointerdown', () => {
@@ -210,6 +213,7 @@ export class Tower {
 
     const attackBoost = towers.reduce((boost, tower) => boost + tower.getAttackBoostFor(this, towers, map), 0);
     if (this.profile.id === 'angel') this.favor = Math.min(100, this.favor + towers.filter(tower => tower !== this && tower.isActive).length);
+    this.favorBar?.update(this.sprite.x, this.sprite.y - this.tileSize * 1.08, this.favor, 100, 0xfacc15);
     const globalMultiplier = 1 + (this.globalLevel - 1) * 0.03;
     const damage = CombatSystem.calculateDamage(this.profile.baseStats.attack * this.upgradeLevel * globalMultiplier * (1 + this.upgradeEffects.attackPercent), attackBoost, damageMultiplier);
     target.takeDamage(damage);
@@ -270,11 +274,11 @@ export class Tower {
     if (skill.effect.damageMultiplier && this.profile.id !== 'cesar') this.nextDamageMultiplier = skill.effect.damageMultiplier * (1 + this.upgradeEffects.skillPower);
     if (skill.id === 'mosasaur-era' && this.sprite instanceof Phaser.GameObjects.Image) {
       this.isTransformed = true;
-      this.sprite.setTexture('xavi-mosasaur-idle').setDisplaySize(this.tileSize * 1.25, this.tileSize * 1.25);
+      this.sprite.setTexture('xavi-mosasaur-idle').setDisplaySize(this.tileSize * 2.2, this.tileSize * 2.2);
       this.scene.time.delayedCall(3000, () => {
         if (this.sprite instanceof Phaser.GameObjects.Image) {
           this.isTransformed = false;
-          this.sprite.setTexture('xavi-human-idle').setDisplaySize(this.tileSize * 1.15, this.tileSize * 1.15);
+          this.sprite.setTexture('xavi-human-idle').setDisplaySize(this.tileSize * 1.8, this.tileSize * 1.8);
         }
       });
     }
@@ -378,7 +382,7 @@ export class Tower {
   heal(amount: number) {
     if (!this.isActive) return;
     this.hp = Math.min(this.maxHp, this.hp + amount);
-    this.healthBar.update(this.sprite.x, this.sprite.y - 21, this.hp, this.maxHp, 0x22c55e);
+    this.healthBar.update(this.sprite.x, this.sprite.y - this.tileSize * 0.9, this.hp, this.maxHp, 0x22c55e);
     VisualFX.floatText(this.scene, this.sprite.x, this.sprite.y, `+${amount}`, '#86efac');
   }
 
@@ -405,7 +409,7 @@ export class Tower {
     }
     const reducedDamage = amount * (100 / (100 + this.profile.baseStats.defense * (1 + defenseBoost)));
     this.hp = Math.max(0, this.hp - reducedDamage);
-    this.healthBar.update(this.sprite.x, this.sprite.y - 21, this.hp, this.maxHp, 0x22c55e);
+    this.healthBar.update(this.sprite.x, this.sprite.y - this.tileSize * 0.9, this.hp, this.maxHp, 0x22c55e);
     if (this.sprite instanceof Phaser.GameObjects.Rectangle) {
       this.sprite.setFillStyle(0xffffff);
       this.scene.time.delayedCall(100, () => this.isActive && this.sprite instanceof Phaser.GameObjects.Rectangle && this.sprite.setFillStyle(0x4444ff));
@@ -467,12 +471,13 @@ export class Tower {
     const previousMaxHp = this.maxHp;
     this.maxHp = Math.round(this.maxHp * 1.2);
     this.hp += this.maxHp - previousMaxHp;
-    this.healthBar.update(this.sprite.x, this.sprite.y - 21, this.hp, this.maxHp, 0x22c55e);
+    this.healthBar.update(this.sprite.x, this.sprite.y - this.tileSize * 0.9, this.hp, this.maxHp, 0x22c55e);
     VisualFX.ring(this.scene, this.sprite.x, this.sprite.y, 0xfacc15, 35);
     return true;
   }
 
   destroy() {
+    this.favorBar?.destroy();
     this.healthBar.destroy();
     this.rangeGraphics.destroy();
     this.sprite.destroy();
