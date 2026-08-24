@@ -36,6 +36,8 @@ export class Tower {
   public upgradeLevel = 1;
   public globalLevel = 1;
   public favor = 0;
+  public tacticalOrder: 'ofensiva' | 'defensiva' | 'precision' | 'asalto' = 'ofensiva';
+  public fieldAnalysis = 0;
   private dodgeUntil = 0;
   public upgradePaths: Record<UpgradePathId, number> = { damage: 0, range: 0, speed: 0, piercing: 0 };
   public isTransformed = false;
@@ -232,6 +234,7 @@ export class Tower {
   }
 
   private updateSkills(time: number, enemies: Enemy[], map: DijkstraMap, towers: Tower[]) {
+    if (this.profile.id === 'tribu') this.updateTacticalOrder(enemies, towers);
     for (const skill of this.profile.skills ?? []) {
       if (skill.type === 'passive') {
         const allies = this.getAllies(towers, map);
@@ -264,6 +267,14 @@ export class Tower {
         SkillSystem.setCooldown(this.skillCooldowns, skill.id, time, skill.cooldownMs ?? 0);
       }
     }
+  }
+
+  private updateTacticalOrder(enemies: Enemy[], towers: Tower[]) {
+    this.fieldAnalysis = Math.min(100, this.fieldAnalysis + (enemies.length > 0 ? 0.25 : 0.05));
+    if (enemies.some(enemy => enemy.isActive && enemy.profile.type === 'boss')) this.tacticalOrder = 'precision';
+    else if (enemies.filter(enemy => enemy.isActive).length >= 5) this.tacticalOrder = 'asalto';
+    else if (towers.some(tower => tower !== this && tower.isActive && tower.hp < tower.maxHp * 0.4)) this.tacticalOrder = 'defensiva';
+    else this.tacticalOrder = 'ofensiva';
   }
 
   private activateSkill(skill: NonNullable<CharacterProfile['skills']>[number], time: number, enemies: Enemy[], map: DijkstraMap, towers: Tower[]) {
@@ -365,6 +376,9 @@ export class Tower {
       const active = skill.type === 'active' && (this.activeEffects.get(skill.id) ?? 0) > this.scene.time.now && inRange;
       if (passive || active) boost += skill.effect.attackBoost ?? 0;
     }
+    if (this.profile.id === 'tribu' && this.getAllies(towers, map).includes(target)) {
+      boost += this.tacticalOrder === 'ofensiva' ? 0.15 : this.tacticalOrder === 'asalto' ? 0.1 : this.tacticalOrder === 'precision' ? 0.08 : 0.03;
+    }
     return boost;
   }
 
@@ -376,7 +390,15 @@ export class Tower {
       const active = skill.type === 'active' && (this.activeEffects.get(skill.id) ?? 0) > time;
       if (inRange && (passive || active)) boost += skill.effect.speedBoost ?? 0;
     }
+    if (this.profile.id === 'tribu' && Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, target.sprite.x, target.sprite.y) <= this.effectiveRange) {
+      boost += this.tacticalOrder === 'ofensiva' ? 0.08 : this.tacticalOrder === 'asalto' ? 0.15 : 0;
+    }
     return boost;
+  }
+
+  getDefenseBoostFor(target: Tower) {
+    if (this.profile.id !== 'tribu' || this.tacticalOrder !== 'defensiva') return 0;
+    return Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, target.sprite.x, target.sprite.y) <= this.effectiveRange ? 0.2 : 0;
   }
 
   heal(amount: number) {
@@ -401,6 +423,7 @@ export class Tower {
     }
     for (const source of towers) {
       if (source === this || !source.isActive) continue;
+      defenseBoost += source.getDefenseBoostFor(this);
       const inRange = Phaser.Math.Distance.Between(source.sprite.x, source.sprite.y, this.sprite.x, this.sprite.y) <= source.effectiveRange;
       if (!inRange) continue;
       for (const skill of source.profile.skills ?? []) {
