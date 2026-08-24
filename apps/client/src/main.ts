@@ -268,6 +268,7 @@ class MainScene extends Phaser.Scene {
     this.updateEconomyUI();
     if (this.selectedTower) {
       this.updateSkillUI(this.selectedTower);
+      if (this.selectedTower.profile.id === 'angel') this.uiTowerRole.innerText = `Rol: ${this.selectedTower.profile.roles.join(', ')} | Daño: ${this.selectedTower.profile.baseStats.attack * this.selectedTower.upgradeLevel} | Vida: ${Math.ceil(this.selectedTower.hp)}/${this.selectedTower.maxHp} | Favor: ${this.selectedTower.favor}/100`;
       if (this.selectedTower.profile.id === 'xavi') this.uiTowerPortrait.src = `/assets/characters/${this.selectedTower.isTransformed ? 'MosasaurioXaviIdle' : 'HumanXaviIdle'}.png`;
     }
     if (this.selectedEnemy?.isActive) {

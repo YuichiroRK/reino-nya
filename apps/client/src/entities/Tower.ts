@@ -35,6 +35,8 @@ export class Tower {
   public isActive = true;
   public upgradeLevel = 1;
   public globalLevel = 1;
+  public favor = 0;
+  private dodgeUntil = 0;
   public upgradePaths: Record<UpgradePathId, number> = { damage: 0, range: 0, speed: 0, piercing: 0 };
   public isTransformed = false;
   private readonly healthBar: HealthBar;
@@ -207,6 +209,7 @@ export class Tower {
     }
 
     const attackBoost = towers.reduce((boost, tower) => boost + tower.getAttackBoostFor(this, towers, map), 0);
+    if (this.profile.id === 'angel') this.favor = Math.min(100, this.favor + towers.filter(tower => tower !== this && tower.isActive).length);
     const globalMultiplier = 1 + (this.globalLevel - 1) * 0.03;
     const damage = CombatSystem.calculateDamage(this.profile.baseStats.attack * this.upgradeLevel * globalMultiplier * (1 + this.upgradeEffects.attackPercent), attackBoost, damageMultiplier);
     target.takeDamage(damage);
@@ -278,7 +281,7 @@ export class Tower {
     if (skill.id === 'call-of-abyss') this.summons.push(new MiniMosasaur(this.scene, this.sprite.x, this.sprite.y, true));
     if (skill.effect.healAmount) {
       const allies = this.getAllies(towers, map);
-      const targets = this.skillTargetPriority === 'all' ? allies : [this.selectSkillAlly(allies)];
+      const targets = this.profile.id === 'angel' || this.skillTargetPriority === 'all' ? allies : [this.selectSkillAlly(allies)];
       for (const target of targets) if (target) {
         target.heal(skill.effect.healAmount * (1 + this.upgradeEffects.skillPower));
         VisualFX.ring(this.scene, target.sprite.x, target.sprite.y, 0x66bb6a, 30);
@@ -381,6 +384,12 @@ export class Tower {
 
   takeDamage(amount: number, towers: Tower[] = []) {
     if (!this.isActive) return;
+    if (this.profile.id === 'angel' && Math.random() < 0.25) {
+      this.dodgeUntil = this.scene.time.now + 3000;
+      VisualFX.burstParticles(this.scene, this.sprite.x, this.sprite.y, 0xfff8bb);
+      VisualFX.floatText(this.scene, this.sprite.x, this.sprite.y, 'ESQUIVA', '#ffe082');
+      return;
+    }
     let defenseBoost = 0;
     for (const skill of this.profile.skills ?? []) {
       if (skill.type === 'passive' && this.passiveReady.get(skill.id)) defenseBoost += skill.effect.defenseBoost ?? 0;
