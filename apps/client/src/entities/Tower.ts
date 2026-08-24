@@ -56,7 +56,7 @@ export class Tower {
     // Draw tower body (on top of range overlay)
     const spriteKey = profile.id === 'xavi' ? 'xavi-human-idle' : `${profile.id}-idle`;
     this.sprite = ['tribu', 'angel', 'xavi', 'gretch', 'kiu', 'lucy', 'cesar'].includes(profile.id)
-      ? scene.add.image(origin.x + x * tileSize + tileSize / 2, origin.y + y * tileSize + tileSize / 2, spriteKey).setDisplaySize(tileSize * (profile.id === 'angel' ? 1.1 : 0.9), tileSize * (profile.id === 'angel' ? 1.1 : 0.9))
+      ? scene.add.image(origin.x + x * tileSize + tileSize / 2, origin.y + y * tileSize + tileSize / 2, spriteKey).setDisplaySize(tileSize * (profile.id === 'xavi' ? 1.15 : 1.25), tileSize * (profile.id === 'xavi' ? 1.15 : 1.25))
       : scene.add.rectangle(origin.x + x * tileSize + tileSize / 2, origin.y + y * tileSize + tileSize / 2, tileSize * 0.8, tileSize * 0.8, 0x4444ff);
     this.healthBar.update(this.sprite.x, this.sprite.y - 21, this.hp, this.maxHp, 0x22c55e);
 
@@ -269,7 +269,7 @@ export class Tower {
       this.scene.time.delayedCall(3000, () => {
         if (this.sprite instanceof Phaser.GameObjects.Image) {
           this.isTransformed = false;
-          this.sprite.setTexture('xavi-human-idle').setDisplaySize(this.tileSize * 0.9, this.tileSize * 0.9);
+          this.sprite.setTexture('xavi-human-idle').setDisplaySize(this.tileSize * 1.15, this.tileSize * 1.15);
         }
       });
     }
@@ -350,7 +350,9 @@ export class Tower {
     let boost = 0;
     for (const skill of this.profile.skills ?? []) {
       const inRange = Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, target.sprite.x, target.sprite.y) <= this.effectiveRange;
-      if (skill.type === 'active' && inRange && (this.activeEffects.get(skill.id) ?? 0) > time) boost += skill.effect.speedBoost ?? 0;
+      const passive = skill.type === 'passive' && this.passiveReady.get(skill.id);
+      const active = skill.type === 'active' && (this.activeEffects.get(skill.id) ?? 0) > time;
+      if (inRange && (passive || active)) boost += skill.effect.speedBoost ?? 0;
     }
     return boost;
   }
